@@ -1,10 +1,9 @@
 package main
 
 import (
-  "github.com/fatih/color"
-  "rsc.io/quote"
+	"github.com/tobyclemson/gorgon/cmd"
 )
 
 func main() {
-  color.Cyan(quote.Hello())
+	cmd.Execute()
 }
