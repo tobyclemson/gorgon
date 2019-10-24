@@ -34,7 +34,7 @@ func init() {
 			"o",
 			"organization",
 			"The type of account to manage, one of 'user' or " +
-				"'organization', defaults to 'organization'")
+				"'organization'")
 
 	if err := viper.BindPFlag(
 		"github-token",

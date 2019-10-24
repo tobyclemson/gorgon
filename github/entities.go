@@ -23,7 +23,7 @@ func (e Entity) String() string {
 	if e < Organization || e > User {
 		return "unknown"
 	}
-	return names[e - 1]
+	return names[e-1]
 }
 
 func EntityFromString(entity string) (Entity, error) {

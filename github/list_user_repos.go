@@ -10,15 +10,23 @@ func ListUserRepositories(
 	ctx := context.Background()
 	githubClient := newClient(ctx, credentials)
 
-	repos, _, err := githubClient.Repositories.List(
-		ctx,
-		user,
-		&github.RepositoryListOptions{})
-	if err != nil {
-		return nil, err
+	repositoryListOptions := &github.RepositoryListOptions{}
+
+	var allRepos []*github.Repository
+	for {
+		repos, resp, err := githubClient.Repositories.List(
+			ctx, user, repositoryListOptions)
+		if err != nil {
+			return nil, err
+		}
+		allRepos = append(allRepos, repos...)
+		if resp.NextPage == 0 {
+			break
+		}
+		repositoryListOptions.Page = resp.NextPage
 	}
 
-	repoNames := ToRepoName(repos)
+	repoNames := ToRepoName(allRepos)
 
 	return repoNames, nil
 }

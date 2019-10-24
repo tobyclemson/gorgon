@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"github.com/google/go-github/v28/github"
+	"sort"
 )
 
 func ListOrganisationRepositories(
@@ -10,15 +11,24 @@ func ListOrganisationRepositories(
 	ctx := context.Background()
 	githubClient := newClient(ctx, credentials)
 
-	repos, _, err := githubClient.Repositories.ListByOrg(
-		ctx,
-		organisation,
-		&github.RepositoryListByOrgOptions{})
-	if err != nil {
-		return nil, err
+	repositoryListOptions := &github.RepositoryListByOrgOptions{}
+
+	var allRepos []*github.Repository
+	for {
+		repos, resp, err := githubClient.Repositories.ListByOrg(
+			ctx, organisation, repositoryListOptions)
+		if err != nil {
+			return nil, err
+		}
+		allRepos = append(allRepos, repos...)
+		if resp.NextPage == 0 {
+			break
+		}
+		repositoryListOptions.Page = resp.NextPage
 	}
 
-	repoNames := ToRepoName(repos)
+	repoNames := ToRepoName(allRepos)
+	sort.Strings(repoNames)
 
 	return repoNames, nil
 }
