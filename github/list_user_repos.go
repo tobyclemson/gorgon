@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"github.com/google/go-github/v28/github"
+	"sort"
 )
 
 func ListUserRepositories(
@@ -27,6 +28,7 @@ func ListUserRepositories(
 	}
 
 	repoNames := ToRepoName(allRepos)
+	sort.Strings(repoNames)
 
 	return repoNames, nil
 }

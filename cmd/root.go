@@ -33,6 +33,13 @@ func init() {
 			"",
 			"The personal access or OAuth token used to "+
 				"log in to GitHub")
+
+	AddSubcommands(rootCommand)
+}
+
+func AddSubcommands(parentCommand *cobra.Command) {
+	parentCommand.AddCommand(organizationCommand)
+	parentCommand.AddCommand(userCommand)
 }
 
 func postInitCommands(commands []*cobra.Command) {
@@ -56,6 +63,10 @@ func presetRequiredFlags(cmd *cobra.Command) {
 			}
 		}
 	})
+}
+
+func AddRootSubCommand(cmd *cobra.Command) {
+	rootCommand.AddCommand(cmd)
 }
 
 func Execute() {
