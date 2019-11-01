@@ -54,7 +54,7 @@ func TestOrganizationSyncReposCommand(t *testing.T) {
 
 	outputLines := strings.Split(stdout.String(), "\n")
 	introLine := outputLines[0]
-	//repoLines := outputLines[2 : len(outputLines)-2]
+	repoLines := outputLines[2 : len(outputLines)-2]
 
 	assert.Equal(t, introLine,
 		fmt.Sprintf(
@@ -62,6 +62,7 @@ func TestOrganizationSyncReposCommand(t *testing.T) {
 			organization,
 			directory))
 	assert.Equal(t, expectedRepoSet, actualRepoSet)
+	assert.Subset(t, repoLines, expectedRepos)
 }
 
 func TestUserListReposCommand(t *testing.T) {
