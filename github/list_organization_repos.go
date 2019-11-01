@@ -6,8 +6,10 @@ import (
 	"sort"
 )
 
-func ListOrganisationRepositories(
-	organisation string, credentials Credentials) ([]string, error) {
+func ListOrganizationRepositories(
+	organization string,
+	credentials Credentials,
+) ([]*github.Repository, error) {
 	ctx := context.Background()
 	githubClient := newClient(ctx, credentials)
 
@@ -16,7 +18,7 @@ func ListOrganisationRepositories(
 	var allRepos []*github.Repository
 	for {
 		repos, resp, err := githubClient.Repositories.ListByOrg(
-			ctx, organisation, repositoryListOptions)
+			ctx, organization, repositoryListOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -27,8 +29,9 @@ func ListOrganisationRepositories(
 		repositoryListOptions.Page = resp.NextPage
 	}
 
-	repoNames := ToRepoName(allRepos)
-	sort.Strings(repoNames)
+	sort.Slice(allRepos, func(i, j int) bool {
+		return *allRepos[i].Name < *allRepos[j].Name
+	})
 
-	return repoNames, nil
+	return allRepos, nil
 }

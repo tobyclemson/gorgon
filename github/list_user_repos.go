@@ -7,7 +7,9 @@ import (
 )
 
 func ListUserRepositories(
-	user string, credentials Credentials) ([]string, error) {
+	user string,
+	credentials Credentials,
+) ([]*github.Repository, error) {
 	ctx := context.Background()
 	githubClient := newClient(ctx, credentials)
 
@@ -27,8 +29,9 @@ func ListUserRepositories(
 		repositoryListOptions.Page = resp.NextPage
 	}
 
-	repoNames := ToRepoName(allRepos)
-	sort.Strings(repoNames)
+	sort.Slice(allRepos, func(i, j int) bool {
+		return *allRepos[i].Name < *allRepos[j].Name
+	})
 
-	return repoNames, nil
+	return allRepos, nil
 }

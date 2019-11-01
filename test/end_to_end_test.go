@@ -2,17 +2,15 @@ package test
 
 import (
 	"fmt"
+	"github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"sort"
 	"strings"
 	"testing"
 )
 
 func TestOrganizationListReposCommand(t *testing.T) {
-	token, found := os.LookupEnv("TEST_GITHUB_TOKEN")
-	assert.True(t, found)
-
+	token := getGithubToken(t)
 	organization := "infrablocks"
 
 	_, stdout, _ := runCommand(t,
@@ -22,19 +20,52 @@ func TestOrganizationListReposCommand(t *testing.T) {
 	sort.Strings(expectedRepos)
 
 	outputLines := strings.Split(stdout.String(), "\n")
-	fmt.Println(outputLines)
-	fmt.Println(len(outputLines))
 	introLine := outputLines[0]
 	repoLines := outputLines[2 : len(outputLines)-2]
 
-	assert.Equal(t, introLine, "Repositories for organization: infrablocks")
+	assert.Equal(t, introLine,
+		"Listing repositories for organization: 'infrablocks'")
 	assert.Len(t, repoLines, len(expectedRepos))
 	assert.Equal(t, repoLines, expectedRepos)
 }
 
+func TestOrganizationSyncReposCommand(t *testing.T) {
+	token := getGithubToken(t)
+	organization := "infrablocks"
+	directory := createTemporaryWorkDirectory(t)
+
+	_, stdout, _ := runCommand(t,
+		"gorgon", "organization", "sync-repos",
+		"-t", token,
+		"-d", directory,
+		organization)
+
+	expectedRepos := listOrganizationRepositories(t, organization, token)
+	actualRepos := listDirectories(t, directory)
+
+	expectedRepoSet := mapset.NewSet()
+	for _, expectedRepo := range expectedRepos {
+		expectedRepoSet.Add(expectedRepo)
+	}
+	actualRepoSet := mapset.NewSet()
+	for _, actualRepo := range actualRepos {
+		actualRepoSet.Add(actualRepo)
+	}
+
+	outputLines := strings.Split(stdout.String(), "\n")
+	introLine := outputLines[0]
+	//repoLines := outputLines[2 : len(outputLines)-2]
+
+	assert.Equal(t, introLine,
+		fmt.Sprintf(
+			"Syncing repositories for organization: '%v' into directory: '%v'",
+			organization,
+			directory))
+	assert.Equal(t, expectedRepoSet, actualRepoSet)
+}
+
 func TestUserListReposCommand(t *testing.T) {
-	token, found := os.LookupEnv("TEST_GITHUB_TOKEN")
-	assert.True(t, found)
+	token := getGithubToken(t)
 
 	user := "tobyclemson"
 
@@ -48,7 +79,8 @@ func TestUserListReposCommand(t *testing.T) {
 	introLine := outputLines[0]
 	repoLines := outputLines[2 : len(outputLines)-2]
 
-	assert.Equal(t, introLine, "Repositories for user: tobyclemson")
+	assert.Equal(t, introLine,
+		"Listing repositories for user: 'tobyclemson'")
 	assert.Len(t, repoLines, len(expectedRepos))
 	assert.Equal(t, repoLines, expectedRepos)
 }

@@ -65,10 +65,6 @@ func presetRequiredFlags(cmd *cobra.Command) {
 	})
 }
 
-func AddRootSubCommand(cmd *cobra.Command) {
-	rootCommand.AddCommand(cmd)
-}
-
 func Execute() {
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)

@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-github/v28/github"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -28,31 +29,66 @@ func newGithubDependencies(token string) (context.Context, *github.Client) {
 	return ctx, client
 }
 
+func getWorkingDirectory(t *testing.T) string {
+	workingDirectory, err := os.Getwd()
+	assert.Nil(t, err)
+
+	return workingDirectory
+}
+
+func listDirectories(t *testing.T, directory string) []string {
+	fileInfos, err := ioutil.ReadDir(directory)
+	if err != nil {
+		t.Fatal("Failed to list directory:", directory)
+	}
+	var directories []string
+	for _, fileInfo := range fileInfos {
+		if fileInfo.IsDir() {
+			directories = append(directories, fileInfo.Name())
+		}
+	}
+
+	return directories
+}
+
 func runCommand(
 	t *testing.T,
 	name string,
 	args ...string,
 ) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer) {
-	workingDirectory, err := os.Getwd()
-	assert.Nil(t, err)
-
+	workingDirectory := getWorkingDirectory(t)
 	binaryPath := fmt.Sprint(workingDirectory, "/../", name)
-
-	fmt.Print("Executing command: ", binaryPath)
-	for _, arg := range args {
-		fmt.Print(" ", arg)
-	}
-	fmt.Println()
 
 	cmd := exec.Command(binaryPath, args...)
 	var outputBuffer, errorBuffer bytes.Buffer
 	cmd.Stdout = &outputBuffer
 	cmd.Stderr = &errorBuffer
 
-	err = cmd.Run()
+	err := cmd.Run()
 	assert.Nil(t, err)
 
 	return cmd, &outputBuffer, &errorBuffer
+}
+
+func getGithubToken(t *testing.T) string {
+	token, found := os.LookupEnv("TEST_GITHUB_TOKEN")
+	assert.True(t, found)
+
+	return token
+}
+
+func createTemporaryWorkDirectory(t *testing.T) string {
+	workingDirectory := getWorkingDirectory(t)
+	temporaryDirectory, err := ioutil.TempDir(
+		fmt.Sprint(workingDirectory, "/../work"),
+		"test-")
+	if err != nil {
+		t.Fatalf("Failed to create work directory '%v': %v",
+			temporaryDirectory,
+			err)
+	}
+
+	return temporaryDirectory
 }
 
 func toNames(repositories []*github.Repository) []string {

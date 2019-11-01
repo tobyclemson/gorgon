@@ -11,10 +11,6 @@ var organizationCommand = &cobra.Command{
 	Long:  "Perform various actions for a given GitHub organization.",
 }
 
-func AddOrganizationSubCommand(cmd *cobra.Command) {
-	organizationCommand.AddCommand(cmd)
-}
-
 func init() {
 	organization.AddSubCommands(organizationCommand)
 }

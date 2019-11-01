@@ -10,7 +10,7 @@ import (
 var userListReposCommand = &cobra.Command{
 	Use:   "list-repos",
 	Short: "List repositories for GitHub user",
-	Long:  "Lists all available repositories for a given GitHub organisation",
+	Long:  "Lists all available repositories for a given GitHub organization",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(command *cobra.Command, args []string) error {
 		token := viper.GetString("github-token")
@@ -20,10 +20,10 @@ var userListReposCommand = &cobra.Command{
 		repositories, err :=
 			github.ListUserRepositories(name, credentials)
 		if err == nil {
-			fmt.Println("Repositories for user:", name)
+			fmt.Printf("Listing repositories for user: '%v'\n", name)
 			fmt.Println()
 			for _, repository := range repositories {
-				fmt.Println(repository)
+				fmt.Println(*repository.Name)
 			}
 			fmt.Println()
 		}

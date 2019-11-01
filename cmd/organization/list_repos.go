@@ -18,12 +18,12 @@ var organizationListReposCommand = &cobra.Command{
 		name := args[0]
 
 		repositories, err :=
-			github.ListOrganisationRepositories(name, credentials)
+			github.ListOrganizationRepositories(name, credentials)
 		if err == nil {
-			fmt.Println("Repositories for organization:", name)
+			fmt.Printf("Listing repositories for organization: '%v'\n", name)
 			fmt.Println()
 			for _, repository := range repositories {
-				fmt.Println(repository)
+				fmt.Println(*repository.Name)
 			}
 			fmt.Println()
 		}
