@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/deckarep/golang-set"
 	"github.com/google/go-github/v28/github"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"sort"
+	"strings"
 	"testing"
 )
 
@@ -27,6 +30,14 @@ func newGithubDependencies(token string) (context.Context, *github.Client) {
 	client := newGithubClient(ctx, token)
 
 	return ctx, client
+}
+
+func newStringSet(items []string) *mapset.Set {
+	set := mapset.NewSet()
+	for _, item := range items {
+		set.Add(item)
+	}
+	return &set
 }
 
 func getWorkingDirectory(t *testing.T) string {
@@ -51,23 +62,67 @@ func listDirectories(t *testing.T, directory string) []string {
 	return directories
 }
 
+type commandOutput struct {
+	Header string
+	Body   []string
+	Raw    []string
+}
+
+func commandOutputFrom(buffer *bytes.Buffer) *commandOutput {
+	lines := strings.Split(buffer.String(), "\n")
+	header := lines[0]
+	body := lines[2 : len(lines)-2]
+	return &commandOutput{
+		Header: header,
+		Body:   body,
+		Raw:    lines,
+	}
+}
+
+func logCommand(t *testing.T, title string, cmd *exec.Cmd) {
+	t.Logf("%v: %v", title, cmd.String())
+	t.Log()
+}
+
+func logLines(t *testing.T, title string, linesBuffer *bytes.Buffer) {
+	t.Logf("%v:", title)
+	t.Log()
+	lines := strings.Split(linesBuffer.String(), "\n")
+	for _, line := range lines {
+		t.Log(line)
+	}
+}
+
+func buildCommand(
+	binary string,
+	args ...string,
+) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer) {
+	cmd := exec.Command(binary, args...)
+	var outputBuffer, errorBuffer bytes.Buffer
+	cmd.Stdout = &outputBuffer
+	cmd.Stderr = &errorBuffer
+
+	return cmd, &outputBuffer, &errorBuffer
+}
+
 func runCommand(
 	t *testing.T,
 	name string,
 	args ...string,
 ) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer) {
 	workingDirectory := getWorkingDirectory(t)
-	binaryPath := fmt.Sprint(workingDirectory, "/../", name)
+	binary := fmt.Sprint(workingDirectory, "/../", name)
 
-	cmd := exec.Command(binaryPath, args...)
-	var outputBuffer, errorBuffer bytes.Buffer
-	cmd.Stdout = &outputBuffer
-	cmd.Stderr = &errorBuffer
+	cmd, outputBuffer, errorBuffer :=
+		buildCommand(binary, args...)
+	logCommand(t, "Executing command", cmd)
 
 	err := cmd.Run()
+	logLines(t, "Standard Output", outputBuffer)
+	logLines(t, "Standard Error", errorBuffer)
 	assert.Nil(t, err)
 
-	return cmd, &outputBuffer, &errorBuffer
+	return cmd, outputBuffer, errorBuffer
 }
 
 func getGithubToken(t *testing.T) string {
@@ -91,11 +146,12 @@ func createTemporaryWorkDirectory(t *testing.T) string {
 	return temporaryDirectory
 }
 
-func toNames(repositories []*github.Repository) []string {
+func toSortedNames(repositories []*github.Repository) []string {
 	var repositoryNames []string
 	for _, repository := range repositories {
 		repositoryNames = append(repositoryNames, *repository.Name)
 	}
+	sort.Strings(repositoryNames)
 
 	return repositoryNames
 }
@@ -104,7 +160,7 @@ func listOrganizationRepositories(
 	t *testing.T,
 	organization string,
 	token string,
-) []string {
+) []*github.Repository {
 	ctx, client := newGithubDependencies(token)
 
 	options := &github.RepositoryListByOrgOptions{}
@@ -126,14 +182,14 @@ func listOrganizationRepositories(
 		options.Page = resp.NextPage
 	}
 
-	return toNames(allRepos)
+	return allRepos
 }
 
 func listUserRepositories(
 	t *testing.T,
 	user string,
 	token string,
-) []string {
+) []*github.Repository {
 	ctx, client := newGithubDependencies(token)
 
 	options := &github.RepositoryListOptions{}
@@ -155,5 +211,5 @@ func listUserRepositories(
 		options.Page = resp.NextPage
 	}
 
-	return toNames(allRepos)
+	return allRepos
 }

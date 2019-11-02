@@ -50,14 +50,33 @@ var organizationSyncReposCommand = &cobra.Command{
 				fmt.Println(*repository.Name)
 				repositoryDirectory :=
 					filepath.Join(resolvedDirectory, *repository.Name)
-				repositoryOptions := &git.CloneOptions{
-					URL:      *repository.GitURL,
-					Progress: os.Stdout,
-				}
-				_, err := git.PlainClone(
-					repositoryDirectory, false, repositoryOptions)
-				if err != nil && err != transport.ErrEmptyRemoteRepository {
-					return err
+				if _, err := os.Stat(repositoryDirectory); os.IsNotExist(err) {
+					cloneOptions := &git.CloneOptions{
+						URL:      *repository.GitURL,
+						Progress: os.Stdout,
+					}
+					_, err := git.PlainClone(
+						repositoryDirectory, false, cloneOptions)
+					if err != nil && err != transport.ErrEmptyRemoteRepository {
+						return err
+					}
+				} else {
+					repository, err := git.PlainOpen(repositoryDirectory)
+					if err != nil {
+						return err
+					}
+					worktree, err := repository.Worktree()
+					if err != nil {
+						return err
+					}
+					pullOptions := &git.PullOptions{
+						RemoteName: "origin",
+						Progress: os.Stdout,
+					}
+					err = worktree.Pull(pullOptions)
+					if err != nil && err != git.NoErrAlreadyUpToDate {
+						return err
+					}
 				}
 				fmt.Println()
 			}

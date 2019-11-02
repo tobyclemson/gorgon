@@ -2,10 +2,9 @@ package test
 
 import (
 	"fmt"
-	"github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
-	"sort"
-	"strings"
+	"gopkg.in/src-d/go-git.v4"
+	"path/filepath"
 	"testing"
 )
 
@@ -13,26 +12,26 @@ func TestOrganizationListReposCommand(t *testing.T) {
 	token := getGithubToken(t)
 	organization := "infrablocks"
 
+	expectedRepos := listOrganizationRepositories(t, organization, token)
+	expectedRepoNames := toSortedNames(expectedRepos)
+
 	_, stdout, _ := runCommand(t,
 		"gorgon", "organization", "list-repos", "-t", token, organization)
 
-	expectedRepos := listOrganizationRepositories(t, organization, token)
-	sort.Strings(expectedRepos)
+	commandOutput := commandOutputFrom(stdout)
 
-	outputLines := strings.Split(stdout.String(), "\n")
-	introLine := outputLines[0]
-	repoLines := outputLines[2 : len(outputLines)-2]
-
-	assert.Equal(t, introLine,
+	assert.Equal(t, commandOutput.Header,
 		"Listing repositories for organization: 'infrablocks'")
-	assert.Len(t, repoLines, len(expectedRepos))
-	assert.Equal(t, repoLines, expectedRepos)
+	assert.Len(t, commandOutput.Body, len(expectedRepos))
+	assert.Equal(t, commandOutput.Body, expectedRepoNames)
 }
 
-func TestOrganizationSyncReposCommand(t *testing.T) {
+func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
 	token := getGithubToken(t)
 	organization := "infrablocks"
 	directory := createTemporaryWorkDirectory(t)
+
+	expectedRepos := listOrganizationRepositories(t, organization, token)
 
 	_, stdout, _ := runCommand(t,
 		"gorgon", "organization", "sync-repos",
@@ -40,29 +39,62 @@ func TestOrganizationSyncReposCommand(t *testing.T) {
 		"-d", directory,
 		organization)
 
-	expectedRepos := listOrganizationRepositories(t, organization, token)
-	actualRepos := listDirectories(t, directory)
+	expectedRepoNames := toSortedNames(expectedRepos)
+	actualRepoNames := listDirectories(t, directory)
 
-	expectedRepoSet := mapset.NewSet()
-	for _, expectedRepo := range expectedRepos {
-		expectedRepoSet.Add(expectedRepo)
-	}
-	actualRepoSet := mapset.NewSet()
-	for _, actualRepo := range actualRepos {
-		actualRepoSet.Add(actualRepo)
-	}
+	commandOutput := commandOutputFrom(stdout)
 
-	outputLines := strings.Split(stdout.String(), "\n")
-	introLine := outputLines[0]
-	repoLines := outputLines[2 : len(outputLines)-2]
-
-	assert.Equal(t, introLine,
+	assert.Equal(t, commandOutput.Header,
 		fmt.Sprintf(
 			"Syncing repositories for organization: '%v' into directory: '%v'",
 			organization,
 			directory))
-	assert.Equal(t, expectedRepoSet, actualRepoSet)
-	assert.Subset(t, repoLines, expectedRepos)
+	assert.Equal(t,
+		newStringSet(expectedRepoNames),
+		newStringSet(actualRepoNames))
+	assert.Subset(t, commandOutput.Body, expectedRepoNames)
+}
+
+func TestOrganizationSyncReposCommandForPopulatedDirectory(t *testing.T) {
+	token := getGithubToken(t)
+	organization := "infrablocks"
+	directory := createTemporaryWorkDirectory(t)
+
+	expectedRepos := listOrganizationRepositories(t, organization, token)
+
+	for i := 0; i < 5; i++ {
+		expectedRepo := expectedRepos[i]
+		expectedRepoPath := filepath.Join(directory, *expectedRepo.Name)
+		_, err := git.PlainClone(expectedRepoPath, false, &git.CloneOptions{
+			URL: *expectedRepo.CloneURL,
+		})
+		if err != nil {
+			t.Fatalf("Failed to clone repository: '%v': %v",
+				expectedRepo.Name,
+				err)
+		}
+	}
+
+	_, stdout, _ := runCommand(t,
+		"gorgon", "organization", "sync-repos",
+		"-t", token,
+		"-d", directory,
+		organization)
+
+	expectedRepoNames := toSortedNames(expectedRepos)
+	actualRepoNames := listDirectories(t, directory)
+
+	commandOutput := commandOutputFrom(stdout)
+
+	assert.Equal(t, commandOutput.Header,
+		fmt.Sprintf(
+			"Syncing repositories for organization: '%v' into directory: '%v'",
+			organization,
+			directory))
+	assert.Equal(t,
+		newStringSet(expectedRepoNames),
+		newStringSet(actualRepoNames))
+	assert.Subset(t, commandOutput.Body, expectedRepoNames)
 }
 
 func TestUserListReposCommand(t *testing.T) {
@@ -74,14 +106,12 @@ func TestUserListReposCommand(t *testing.T) {
 		"gorgon", "user", "list-repos", "-t", token, user)
 
 	expectedRepos := listUserRepositories(t, user, token)
-	sort.Strings(expectedRepos)
+	expectedRepoNames := toSortedNames(expectedRepos)
 
-	outputLines := strings.Split(stdout.String(), "\n")
-	introLine := outputLines[0]
-	repoLines := outputLines[2 : len(outputLines)-2]
+	commandOutput := commandOutputFrom(stdout)
 
-	assert.Equal(t, introLine,
+	assert.Equal(t, commandOutput.Header,
 		"Listing repositories for user: 'tobyclemson'")
-	assert.Len(t, repoLines, len(expectedRepos))
-	assert.Equal(t, repoLines, expectedRepos)
+	assert.Len(t, commandOutput.Body, len(expectedRepos))
+	assert.Equal(t, commandOutput.Body, expectedRepoNames)
 }
