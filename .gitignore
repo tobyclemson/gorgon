@@ -3,4 +3,5 @@
 *.iml
 .idea/
 gorgon
+build/
 work/*

@@ -9,4 +9,3 @@ func ToRepoName(repos []*github.Repository) []string {
 	}
 	return names
 }
-

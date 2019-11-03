@@ -21,8 +21,7 @@ var rootCommand = &cobra.Command{
 
 		cmd.Flags().VisitAll(func(f *pflag.Flag) {
 			if viper.IsSet(f.Name) && viper.GetString(f.Name) != "" {
-				if err := cmd.Flags().Set(f.Name, viper.GetString(f.Name));
-					err != nil {
+				if err := cmd.Flags().Set(f.Name, viper.GetString(f.Name)); err != nil {
 					panic(err)
 				}
 			}
