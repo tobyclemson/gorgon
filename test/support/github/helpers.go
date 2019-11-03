@@ -14,4 +14,3 @@ func ToSortedRepositoryNames(repositories []*github.Repository) []string {
 
 	return repositoryNames
 }
-

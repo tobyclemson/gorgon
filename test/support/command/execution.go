@@ -40,4 +40,3 @@ func Run(
 
 	return cmd, outputBuffer, errorBuffer
 }
-

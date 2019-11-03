@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+var Version string
+
 var rootCommand = &cobra.Command{
 	Use:   "gorgon",
 	Short: "Manage GitHub organizations or users.",
@@ -29,7 +31,6 @@ var rootCommand = &cobra.Command{
 
 		return nil
 	},
-	Version: "0.1",
 }
 
 func init() {
@@ -51,9 +52,12 @@ func init() {
 func AddSubcommands(parentCommand *cobra.Command) {
 	parentCommand.AddCommand(organizationCommand)
 	parentCommand.AddCommand(userCommand)
+	parentCommand.AddCommand(versionCommand)
 }
 
-func Execute() {
+func Execute(version string) {
+	Version = version
+
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

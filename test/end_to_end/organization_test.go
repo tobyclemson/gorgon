@@ -94,4 +94,3 @@ func TestOrganizationSyncReposCommandForPopulatedDirectory(t *testing.T) {
 		support.NewStringSet(actualRepoNames))
 	assert.Subset(t, commandOutput.Body, expectedRepoNames)
 }
-

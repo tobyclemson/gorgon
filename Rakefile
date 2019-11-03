@@ -1,6 +1,6 @@
 require 'rake'
 
-task :default => %w(clean cli:format cli:vet cli:build)
+task :default => %w(clean all:format all:vet cli:build)
 
 task :clean do
   rm_rf('build/*')
@@ -55,10 +55,47 @@ namespace :cli do
 
     osarch_switch = "-osarch='#{os_arches}'"
     output_switch = "-output='#{output_dir}'"
+    ldflags_switch = "-ldflags '-X main.Version=#{version}'"
+    switches = "#{osarch_switch} #{output_switch} #{ldflags_switch}"
 
     puts "Building CLI with version: #{version}..."
-    sh("bash -c \"gox #{osarch_switch} #{output_switch} #{package}\"")
+    sh("bash -c \"gox #{switches} #{package}\"")
   end
+end
+
+namespace :test do
+  namespace :end_to_end do
+    desc 'Vet the end-to-end test source'
+    task :vet => %w(dependencies:vendor) do
+      packages = go_packages_satisfying(
+          inclusions: %w(test))
+      puts "Vetting end-to-end test code..."
+      sh("bash -c \"go vet #{packages}\"")
+    end
+
+    desc 'Format the end-to-end test source'
+    task :format do
+      packages = go_packages_satisfying(
+          inclusions: %w(test))
+      puts 'Formatting end-to-end test code...'
+      sh("bash -c \"go fmt #{packages}\"")
+    end
+
+    task :run do
+      packages = go_packages_satisfying(
+          inclusions: %w(test/end_to_end))
+      puts "Running end-to-end tests..."
+      sh("bash -c \"go test -v #{packages}\"")
+    end
+  end
+end
+
+namespace :all do
+  desc "Vet all source"
+  task :vet => %w(cli:vet test:end_to_end:vet)
+
+  desc "Format all source"
+  task :format => %w(cli:format test:end_to_end:format)
 end
 
 def go_packages_satisfying(exclusions: [], inclusions: [])
