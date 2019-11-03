@@ -1,12 +1,17 @@
 require 'rake'
+require 'yaml'
 
-task :default => %w(clean all:format all:vet cli:build)
+require_relative 'lib/platform'
+
+task :default => %w(clean all:format all:vet cli:build test:end_to_end:run)
 
 task :clean do
+  puts "Cleaning temporary directories..."
   rm_rf('build/*')
   Dir.glob("work/*")
       .select{ |file| /^[^.]/.match file }
       .each { |file| rm_rf(file)}
+  puts
 end
 
 namespace :tools do
@@ -15,6 +20,7 @@ namespace :tools do
     task :gox do
       puts "Installing gox..."
       sh('bash -c "go get github.com/mitchellh/gox"')
+      puts
     end
 
     task :all => %w(tools:install:gox)
@@ -26,6 +32,7 @@ namespace :dependencies do
   task :vendor do
     puts "Vendoring dependencies..."
     sh('bash -c "go mod vendor"')
+    puts
   end
 end
 
@@ -36,6 +43,7 @@ namespace :cli do
         exclusions: %w(vendor test))
     puts "Vetting production code..."
     sh("bash -c \"go vet #{packages}\"")
+    puts
   end
 
   desc "Format the CLI tool source"
@@ -44,12 +52,13 @@ namespace :cli do
         exclusions: %w(vendor test))
     puts 'Formatting production code...'
     sh("bash -c \"go fmt #{packages}\"")
+    puts
   end
 
   desc "Build the CLI tool"
   task :build => %w(tools:install:all dependencies:vendor) do
-    version = ENV['VERSION'] || 'local'
-    os_arches = 'linux/amd64 darwin/amd64'
+    version = get_version
+    os_arches = 'linux/amd64 darwin/amd64 windows/amd64'
     output_dir = "build/bin/#{version}_{{.OS}}_{{.Arch}}/{{.Dir}}"
     package = "github.com/tobyclemson/gorgon"
 
@@ -60,6 +69,7 @@ namespace :cli do
 
     puts "Building CLI with version: #{version}..."
     sh("bash -c \"gox #{switches} #{package}\"")
+    puts
   end
 end
 
@@ -71,6 +81,7 @@ namespace :test do
           inclusions: %w(test))
       puts "Vetting end-to-end test code..."
       sh("bash -c \"go vet #{packages}\"")
+      puts
     end
 
     desc 'Format the end-to-end test source'
@@ -79,13 +90,29 @@ namespace :test do
           inclusions: %w(test))
       puts 'Formatting end-to-end test code...'
       sh("bash -c \"go fmt #{packages}\"")
+      puts
     end
 
     task :run do
       packages = go_packages_satisfying(
           inclusions: %w(test/end_to_end))
+
+      github_credentials = YAML.load_file('secrets/github/credentials.yaml')
+      github_token = github_credentials['github_token']
+      github_token_env_var = "TEST_GITHUB_TOKEN=#{github_token}"
+
+      binary_os = Platform.os
+      binary_architecture = Platform.architecture
+      binary_version = get_version
+      binary_directory = "#{binary_version}_#{binary_os}_#{binary_architecture}"
+      binary_path = "build/bin/#{binary_directory}/gorgon"
+      binary_path_env_var = "TEST_BINARY_PATH=#{binary_path}"
+
+      env_vars = "#{github_token_env_var} #{binary_path_env_var}"
+
       puts "Running end-to-end tests..."
-      sh("bash -c \"go test -v #{packages}\"")
+      sh("bash -c \"#{env_vars} go test -v #{packages}\"")
+      puts
     end
   end
 end
@@ -96,6 +123,10 @@ namespace :all do
 
   desc "Format all source"
   task :format => %w(cli:format test:end_to_end:format)
+end
+
+def get_version
+  ENV['VERSION'] || 'local'
 end
 
 def go_packages_satisfying(exclusions: [], inclusions: [])

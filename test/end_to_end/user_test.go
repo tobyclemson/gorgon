@@ -13,11 +13,12 @@ import (
 
 func TestUserListReposCommand(t *testing.T) {
 	token := github.GetToken(t)
+	binary := support.GetBinaryPath(t)
 
-	user := "tobyclemson"
+	user := "chrisyeoward"
 
 	_, stdout, _ := command.Run(t,
-		"gorgon", "user", "list-repos", "-t", token, user)
+		binary, "user", "list-repos", "-t", token, user)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
@@ -25,20 +26,21 @@ func TestUserListReposCommand(t *testing.T) {
 	commandOutput := command.OutputFrom(stdout)
 
 	assert.Equal(t, commandOutput.Header,
-		"Listing repositories for user: 'tobyclemson'")
+		"Listing repositories for user: 'chrisyeoward'")
 	assert.Len(t, commandOutput.Body, len(expectedRepos))
 	assert.Equal(t, commandOutput.Body, expectedRepoNames)
 }
 
 func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 	token := github.GetToken(t)
-	user := "tobyclemson"
+	binary := support.GetBinaryPath(t)
+	user := "chrisyeoward"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 
 	_, stdout, _ := command.Run(t,
-		"gorgon", "user", "sync-repos",
+		binary, "user", "sync-repos",
 		"-t", token,
 		"-d", directory,
 		user)
@@ -61,18 +63,19 @@ func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 
 func TestUserSyncReposCommandForPopulatedDirectory(t *testing.T) {
 	token := github.GetToken(t)
-	user := "tobyclemson"
+	binary := support.GetBinaryPath(t)
+	user := "chrisyeoward"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 3; i++ {
 		repo := expectedRepos[i]
 		git.CloneRepository(t, directory, *repo.Name, *repo.CloneURL)
 	}
 
 	_, stdout, _ := command.Run(t,
-		"gorgon", "user", "sync-repos",
+		binary, "user", "sync-repos",
 		"-t", token,
 		"-d", directory,
 		user)

@@ -13,33 +13,35 @@ import (
 
 func TestOrganizationListReposCommand(t *testing.T) {
 	token := github.GetToken(t)
-	organization := "infrablocks"
+	binary := support.GetBinaryPath(t)
+	organization := "javafunk"
 
 	expectedRepos :=
 		github.ListOrganizationRepositories(t, organization, token)
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
 
 	_, stdout, _ := command.Run(t,
-		"gorgon", "organization", "list-repos", "-t", token, organization)
+		binary, "organization", "list-repos", "-t", token, organization)
 
 	commandOutput := command.OutputFrom(stdout)
 
 	assert.Equal(t, commandOutput.Header,
-		"Listing repositories for organization: 'infrablocks'")
+		"Listing repositories for organization: 'javafunk'")
 	assert.Len(t, commandOutput.Body, len(expectedRepos))
 	assert.Equal(t, commandOutput.Body, expectedRepoNames)
 }
 
 func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
 	token := github.GetToken(t)
-	organization := "infrablocks"
+	binary := support.GetBinaryPath(t)
+	organization := "javafunk"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
 	expectedRepos :=
 		github.ListOrganizationRepositories(t, organization, token)
 
 	_, stdout, _ := command.Run(t,
-		"gorgon", "organization", "sync-repos",
+		binary, "organization", "sync-repos",
 		"-t", token,
 		"-d", directory,
 		organization)
@@ -62,19 +64,20 @@ func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
 
 func TestOrganizationSyncReposCommandForPopulatedDirectory(t *testing.T) {
 	token := github.GetToken(t)
-	organization := "infrablocks"
+	binary := support.GetBinaryPath(t)
+	organization := "javafunk"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
 	expectedRepos :=
 		github.ListOrganizationRepositories(t, organization, token)
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 3; i++ {
 		repo := expectedRepos[i]
 		git.CloneRepository(t, directory, *repo.Name, *repo.CloneURL)
 	}
 
 	_, stdout, _ := command.Run(t,
-		"gorgon", "organization", "sync-repos",
+		binary, "organization", "sync-repos",
 		"-t", token,
 		"-d", directory,
 		organization)
