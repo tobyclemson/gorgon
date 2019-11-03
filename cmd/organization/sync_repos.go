@@ -3,7 +3,6 @@ package organization
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/tobyclemson/gorgon/github"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
@@ -18,9 +17,9 @@ var organizationSyncReposCommand = &cobra.Command{
 		"with a local directory, which may or may not already contain " +
 		"repositories from the organization.",
 	Args: cobra.ExactArgs(1),
-	RunE: func(command *cobra.Command, args []string) error {
-		token := viper.GetString("github-token")
-		targetDirectory := viper.GetString("target-directory")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		token := cmd.Flag("github-token").Value.String()
+		targetDirectory := cmd.Flag("target-directory").Value.String()
 		credentials := github.Credentials{Token: token}
 		name := args[0]
 
@@ -31,14 +30,14 @@ var organizationSyncReposCommand = &cobra.Command{
 		} else {
 			resolvedDirectory = targetDirectory
 		}
-		if !filepath.IsAbs(targetDirectory) {
-			resolvedDirectory, err = filepath.Abs(targetDirectory)
+		if !filepath.IsAbs(resolvedDirectory) {
+			resolvedDirectory, err = filepath.Abs(resolvedDirectory)
 			if err != nil {
 				return err
 			}
 		}
 		repositories, err :=
-			github.ListOrganizationRepositories(name, credentials)
+			github.ListUserRepositories(name, credentials)
 		if err == nil {
 			fmt.Printf(
 				"Syncing repositories for organization: '%v' into "+
@@ -71,7 +70,7 @@ var organizationSyncReposCommand = &cobra.Command{
 					}
 					pullOptions := &git.PullOptions{
 						RemoteName: "origin",
-						Progress: os.Stdout,
+						Progress:   os.Stdout,
 					}
 					err = worktree.Pull(pullOptions)
 					if err != nil && err != git.NoErrAlreadyUpToDate {
@@ -93,7 +92,7 @@ func init() {
 			"target-directory",
 			"d",
 			"",
-			"The directory into which repositories should be synced, "+
-				"defaults to a directory under the working directory with "+
-				"the name of the organization")
+			"directory into which repositories should be synced, defaults "+
+				"to a directory under the working directory with the name of "+
+				"the organization")
 }

@@ -14,24 +14,36 @@ var rootCommand = &cobra.Command{
 	Short: "Manage GitHub organizations or users.",
 	Long: "Gorgon is a powerful command line tool to manage GitHub " +
 		"organizations and users.",
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return err
+		}
+
+		cmd.Flags().VisitAll(func(f *pflag.Flag) {
+			if viper.IsSet(f.Name) && viper.GetString(f.Name) != "" {
+				if err := cmd.Flags().Set(f.Name, viper.GetString(f.Name));
+					err != nil {
+					panic(err)
+				}
+			}
+		})
+
+		return nil
+	},
 	Version: "0.1",
 }
 
 func init() {
 	viper.SetEnvPrefix("gorgon")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-
-	cobra.OnInitialize(func() {
-		viper.AutomaticEnv()
-		postInitCommands(rootCommand.Commands())
-	})
+	viper.AutomaticEnv()
 
 	rootCommand.PersistentFlags().
 		StringP(
 			"github-token",
 			"t",
 			"",
-			"The personal access or OAuth token used to "+
+			"personal access or OAuth token used to "+
 				"log in to GitHub")
 
 	AddSubcommands(rootCommand)
@@ -40,29 +52,6 @@ func init() {
 func AddSubcommands(parentCommand *cobra.Command) {
 	parentCommand.AddCommand(organizationCommand)
 	parentCommand.AddCommand(userCommand)
-}
-
-func postInitCommands(commands []*cobra.Command) {
-	for _, cmd := range commands {
-		presetRequiredFlags(cmd)
-		if cmd.HasSubCommands() {
-			postInitCommands(cmd.Commands())
-		}
-	}
-}
-
-func presetRequiredFlags(cmd *cobra.Command) {
-	if err := viper.BindPFlags(cmd.Flags()); err != nil {
-		panic(err)
-	}
-	cmd.Flags().VisitAll(func(f *pflag.Flag) {
-		if viper.IsSet(f.Name) && viper.GetString(f.Name) != "" {
-			if err := cmd.Flags().Set(f.Name, viper.GetString(f.Name));
-				err != nil {
-				panic(err)
-			}
-		}
-	})
 }
 
 func Execute() {
