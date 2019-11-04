@@ -81,14 +81,16 @@ namespace :cli do
   task :release do
     version = next_release_version
 
+    puts "Releasing CLI with version: #{version}"
     github_credentials = YAML.load_file('secrets/github/credentials.yaml')
     github_token = github_credentials['github_token']
 
     binary_specifier = ->(v, os, arch) {
       return "#{v}_#{os}_#{arch}"
     }
-    binary_path = ->(v, os, arch) {
-      return "build/bin/#{binary_specifier.call(v, os, arch)}/gorgon"
+    binary_path = ->(v, os, arch, ext) {
+      ext_part = ext ? ".#{ext}" : ""
+      return "build/bin/#{binary_specifier.call(v, os, arch)}/gorgon#{ext_part}"
     }
 
     Rake::Task["cli:build"].invoke(version)
@@ -98,12 +100,21 @@ namespace :cli do
         name: version,
         draft: true,
     })
-    [[:darwin, :amd64], [:linux, :amd64], [:windows, :amd64]].each do |os_arch|
+    [
+        [:darwin, :amd64, nil],
+        [:linux, :amd64, nil],
+        [:windows, :amd64, :exe]
+    ].each do |os_arch|
       client.upload_asset(
-          release.rels[:upload_url],
-          binary_path.call(version, os_arch[0], os_arch[1]),
-          {name: "gorgon-#{version}-#{os_arch[0]}-#{os_arch[1]}"})
+          release.url,
+          binary_path.call(version, os_arch[0], os_arch[1], os_arch[2]),
+          {
+              name: "gorgon-#{version}-#{os_arch[0]}-#{os_arch[1]}",
+              content_type: "application/octet-stream"
+          })
+
     end
+    puts
   end
 end
 
