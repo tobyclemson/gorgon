@@ -13,8 +13,8 @@ task :clean do
   puts "Cleaning temporary directories..."
   rm_rf('build/*')
   Dir.glob("work/*")
-      .select{ |file| /^[^.]/.match file }
-      .each { |file| rm_rf(file)}
+      .select { |file| /^[^.]/.match file }
+      .each { |file| rm_rf(file) }
   puts
 end
 
@@ -96,10 +96,9 @@ namespace :cli do
     Rake::Task["cli:build"].invoke(version)
 
     client = Octokit::Client.new(access_token: github_token)
-    release = client.create_release('tobyclemson/gorgon', version, {
+    release = client.create_release('tobyclemson/gorgon', version,
         name: version,
-        draft: true,
-    })
+        draft: true)
     [
         [:darwin, :amd64, nil],
         [:linux, :amd64, nil],
@@ -108,12 +107,11 @@ namespace :cli do
       client.upload_asset(
           release.url,
           binary_path.call(version, os_arch[0], os_arch[1], os_arch[2]),
-          {
-              name: "gorgon-#{version}-#{os_arch[0]}-#{os_arch[1]}",
-              content_type: "application/octet-stream"
-          })
-
+          name: "gorgon-#{version}-#{os_arch[0]}-#{os_arch[1]}",
+          content_type: "application/octet-stream")
     end
+    client.update_release(release.url, draft: false)
+
     puts
   end
 end
