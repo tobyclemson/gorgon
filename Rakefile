@@ -81,7 +81,6 @@ namespace :cli do
   task :release do
     version = next_release_version
 
-    puts "Releasing CLI with version: #{version}"
     github_credentials = YAML.load_file('secrets/github/credentials.yaml')
     github_token = github_credentials['github_token']
 
@@ -95,6 +94,7 @@ namespace :cli do
 
     Rake::Task["cli:build"].invoke(version)
 
+    puts "Releasing CLI with version: #{version}"
     client = Octokit::Client.new(access_token: github_token)
     release = client.create_release('tobyclemson/gorgon', version,
         name: version,
@@ -159,21 +159,6 @@ namespace :test do
     end
   end
 end
-
-# Want:
-# - artifact uploaded and release created on github on release
-# - repository tagged with version on release
-#
-# To do this:
-# - need version number pre build, could be derived from previous tag
-# - need to push repository after creating release
-#
-# So:
-# - get next tag as function?
-# - build (with version)
-# - create release (with version)
-# - create tag and push (with version)
-# - release and tag could be one task
 
 namespace :all do
   desc "Vet all source"
