@@ -1,7 +1,11 @@
 require 'rake'
 require 'yaml'
+require 'git'
+require 'semantic'
+require 'octokit'
 
 require_relative 'lib/platform'
+require_relative 'lib/version'
 
 task :default => %w(clean all:format all:vet cli:build test:end_to_end:run)
 
@@ -56,8 +60,9 @@ namespace :cli do
   end
 
   desc "Build the CLI tool"
-  task :build => %w(tools:install:all dependencies:vendor) do
-    version = get_version
+  task :build,
+      [:version] => %w(tools:install:all dependencies:vendor) do |_, args|
+    version = args.version || next_prerelease_version
     os_arches = 'linux/amd64 darwin/amd64 windows/amd64'
     output_dir = "build/bin/#{version}_{{.OS}}_{{.Arch}}/{{.Dir}}"
     package = "github.com/tobyclemson/gorgon"
@@ -70,6 +75,35 @@ namespace :cli do
     puts "Building CLI with version: #{version}..."
     sh("bash -c \"gox #{switches} #{package}\"")
     puts
+  end
+
+  desc "Release a new version of the CLI tool"
+  task :release do
+    version = next_release_version
+
+    github_credentials = YAML.load_file('secrets/github/credentials.yaml')
+    github_token = github_credentials['github_token']
+
+    binary_specifier = ->(v, os, arch) {
+      return "#{v}_#{os}_#{arch}"
+    }
+    binary_path = ->(v, os, arch) {
+      return "build/bin/#{binary_specifier.call(v, os, arch)}/gorgon"
+    }
+
+    Rake::Task["cli:build"].invoke(version)
+
+    client = Octokit::Client.new(access_token: github_token)
+    release = client.create_release('tobyclemson/gorgon', version, {
+        name: version,
+        draft: true,
+    })
+    [[:darwin, :amd64], [:linux, :amd64], [:windows, :amd64]].each do |os_arch|
+      client.upload_asset(
+          release.rels[:upload_url],
+          binary_path.call(version, os_arch[0], os_arch[1]),
+          {name: "gorgon-#{version}-#{os_arch[0]}-#{os_arch[1]}"})
+    end
   end
 end
 
@@ -93,7 +127,7 @@ namespace :test do
       puts
     end
 
-    task :run do
+    task :run, [:version] do |_, args|
       packages = go_packages_satisfying(
           inclusions: %w(test/end_to_end))
 
@@ -103,7 +137,7 @@ namespace :test do
 
       binary_os = Platform.os
       binary_architecture = Platform.architecture
-      binary_version = get_version
+      binary_version = args.version || next_prerelease_version
       binary_directory = "#{binary_version}_#{binary_os}_#{binary_architecture}"
       binary_path = "build/bin/#{binary_directory}/gorgon"
       binary_path_env_var = "TEST_BINARY_PATH=#{binary_path}"
@@ -117,6 +151,21 @@ namespace :test do
   end
 end
 
+# Want:
+# - artifact uploaded and release created on github on release
+# - repository tagged with version on release
+#
+# To do this:
+# - need version number pre build, could be derived from previous tag
+# - need to push repository after creating release
+#
+# So:
+# - get next tag as function?
+# - build (with version)
+# - create release (with version)
+# - create tag and push (with version)
+# - release and tag could be one task
+
 namespace :all do
   desc "Vet all source"
   task :vet => %w(cli:vet test:end_to_end:vet)
@@ -125,8 +174,22 @@ namespace :all do
   task :format => %w(cli:format test:end_to_end:format)
 end
 
-def get_version
-  ENV['VERSION'] || 'local'
+def repo
+  Git.open('.')
+end
+
+def latest_version
+  repo.tags.map do |tag|
+    Semantic::Version.new(tag.name)
+  end.max
+end
+
+def next_prerelease_version
+  latest_version.rc!.to_s
+end
+
+def next_release_version
+  latest_version.release!.to_s
 end
 
 def go_packages_satisfying(exclusions: [], inclusions: [])
