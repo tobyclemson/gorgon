@@ -142,7 +142,7 @@ namespace :test do
 
       github_credentials = YAML.load_file('secrets/github/credentials.yaml')
       github_token = github_credentials['github_token']
-      github_token_env_var = "TEST_GITHUB_TOKEN=#{github_token}"
+      ENV["TEST_GITHUB_TOKEN"] = github_token
 
       binary_os = Platform.os
       binary_architecture = Platform.architecture
@@ -151,10 +151,8 @@ namespace :test do
       binary_path = "build/bin/#{binary_directory}/gorgon"
       binary_path_env_var = "TEST_BINARY_PATH=#{binary_path}"
 
-      env_vars = "#{github_token_env_var} #{binary_path_env_var}"
-
       puts "Running end-to-end tests..."
-      sh("bash -c \"#{env_vars} go test -v #{packages}\"")
+      sh("bash -c \"#{binary_path_env_var} go test -v #{packages}\"")
       puts
     end
   end

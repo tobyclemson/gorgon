@@ -8,6 +8,7 @@ import (
 	"github.com/tobyclemson/gorgon/test/support/fs"
 	"github.com/tobyclemson/gorgon/test/support/git"
 	"github.com/tobyclemson/gorgon/test/support/github"
+	"os"
 	"testing"
 )
 
@@ -16,12 +17,15 @@ func TestOrganizationListReposCommand(t *testing.T) {
 	binary := support.GetBinaryPath(t)
 	organization := "javafunk"
 
+	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
+
 	expectedRepos :=
 		github.ListOrganizationRepositories(t, organization, token)
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
 
 	_, stdout, _ := command.Run(t,
-		binary, "organization", "list-repos", "-t", token, organization)
+		binary, "organization", "list-repos", organization)
 
 	commandOutput := command.OutputFrom(stdout)
 
@@ -37,12 +41,14 @@ func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
 	organization := "javafunk"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
+	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
+
 	expectedRepos :=
 		github.ListOrganizationRepositories(t, organization, token)
 
 	_, stdout, _ := command.Run(t,
 		binary, "organization", "sync-repos",
-		"-t", token,
 		"-d", directory,
 		organization)
 
@@ -68,17 +74,19 @@ func TestOrganizationSyncReposCommandForPopulatedDirectory(t *testing.T) {
 	organization := "javafunk"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
+	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
+
 	expectedRepos :=
 		github.ListOrganizationRepositories(t, organization, token)
 
 	for i := 0; i < 3; i++ {
 		repo := expectedRepos[i]
-		git.CloneRepository(t, directory, *repo.Name, *repo.CloneURL)
+		git.CloneRepository(t, directory, *repo.Name, *repo.SSHURL)
 	}
 
 	_, stdout, _ := command.Run(t,
 		binary, "organization", "sync-repos",
-		"-t", token,
 		"-d", directory,
 		organization)
 

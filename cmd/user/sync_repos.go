@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/tobyclemson/gorgon/config"
-	"github.com/tobyclemson/gorgon/github"
 	"github.com/tobyclemson/gorgon/git"
+	"github.com/tobyclemson/gorgon/github"
 	"os"
 	"path/filepath"
 )

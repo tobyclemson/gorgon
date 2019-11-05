@@ -8,17 +8,20 @@ import (
 	"github.com/tobyclemson/gorgon/test/support/fs"
 	"github.com/tobyclemson/gorgon/test/support/git"
 	"github.com/tobyclemson/gorgon/test/support/github"
+	"os"
 	"testing"
 )
 
 func TestUserListReposCommand(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
+	user := "tobyclemson"
 
-	user := "chrisyeoward"
+	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
 
 	_, stdout, _ := command.Run(t,
-		binary, "user", "list-repos", "-t", token, user)
+		binary, "user", "list-repos", user)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
@@ -26,7 +29,7 @@ func TestUserListReposCommand(t *testing.T) {
 	commandOutput := command.OutputFrom(stdout)
 
 	assert.Equal(t, commandOutput.Header,
-		"Listing repositories for user: 'chrisyeoward'")
+		"Listing repositories for user: 'tobyclemson'")
 	assert.Len(t, commandOutput.Body, len(expectedRepos))
 	assert.Equal(t, commandOutput.Body, expectedRepoNames)
 }
@@ -34,14 +37,16 @@ func TestUserListReposCommand(t *testing.T) {
 func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
-	user := "chrisyeoward"
+	user := "tobyclemson"
 	directory := fs.CreateTemporaryWorkDirectory(t)
+
+	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 
 	_, stdout, _ := command.Run(t,
 		binary, "user", "sync-repos",
-		"-t", token,
 		"-d", directory,
 		user)
 
@@ -64,19 +69,21 @@ func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 func TestUserSyncReposCommandForPopulatedDirectory(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
-	user := "chrisyeoward"
+	user := "tobyclemson"
 	directory := fs.CreateTemporaryWorkDirectory(t)
+
+	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 
 	for i := 0; i < 3; i++ {
 		repo := expectedRepos[i]
-		git.CloneRepository(t, directory, *repo.Name, *repo.CloneURL)
+		git.CloneRepository(t, directory, *repo.Name, *repo.SSHURL)
 	}
 
 	_, stdout, _ := command.Run(t,
 		binary, "user", "sync-repos",
-		"-t", token,
 		"-d", directory,
 		user)
 
