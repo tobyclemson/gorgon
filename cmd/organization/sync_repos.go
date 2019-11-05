@@ -3,9 +3,9 @@ package organization
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/tobyclemson/gorgon/config"
 	"github.com/tobyclemson/gorgon/github"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport"
+	"github.com/tobyclemson/gorgon/git"
 	"os"
 	"path/filepath"
 )
@@ -18,62 +18,41 @@ var organizationSyncReposCommand = &cobra.Command{
 		"repositories from the organization.",
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		token := cmd.Flag("github-token").Value.String()
-		targetDirectory := cmd.Flag("target-directory").Value.String()
-		credentials := github.Credentials{Token: token}
 		name := args[0]
 
-		err := error(nil)
-		resolvedDirectory := ""
-		if targetDirectory == "" {
-			resolvedDirectory = name
-		} else {
-			resolvedDirectory = targetDirectory
+		token, err := config.GithubToken(cmd)
+		if err != nil {
+			return err
 		}
-		if !filepath.IsAbs(resolvedDirectory) {
-			resolvedDirectory, err = filepath.Abs(resolvedDirectory)
-			if err != nil {
-				return err
-			}
+
+		targetDirectory, err := config.TargetDirectory(cmd, name)
+		if err != nil {
+			return err
 		}
+
+		credentials := github.Credentials{Token: token}
+
 		repositories, err :=
-			github.ListUserRepositories(name, credentials)
+			github.ListOrganizationRepositories(name, credentials)
 		if err == nil {
 			fmt.Printf(
 				"Syncing repositories for organization: '%v' into "+
 					"directory: '%v'\n",
 				name,
-				resolvedDirectory)
+				targetDirectory)
 			fmt.Println()
 			for _, repository := range repositories {
 				fmt.Println(*repository.Name)
 				repositoryDirectory :=
-					filepath.Join(resolvedDirectory, *repository.Name)
+					filepath.Join(targetDirectory, *repository.Name)
 				if _, err := os.Stat(repositoryDirectory); os.IsNotExist(err) {
-					cloneOptions := &git.CloneOptions{
-						URL:      *repository.GitURL,
-						Progress: os.Stdout,
-					}
-					_, err := git.PlainClone(
-						repositoryDirectory, false, cloneOptions)
-					if err != nil && err != transport.ErrEmptyRemoteRepository {
+					err = git.Clone(repository, repositoryDirectory)
+					if err != nil {
 						return err
 					}
 				} else {
-					repository, err := git.PlainOpen(repositoryDirectory)
+					err = git.Pull(repositoryDirectory)
 					if err != nil {
-						return err
-					}
-					worktree, err := repository.Worktree()
-					if err != nil {
-						return err
-					}
-					pullOptions := &git.PullOptions{
-						RemoteName: "origin",
-						Progress:   os.Stdout,
-					}
-					err = worktree.Pull(pullOptions)
-					if err != nil && err != git.NoErrAlreadyUpToDate {
 						return err
 					}
 				}
