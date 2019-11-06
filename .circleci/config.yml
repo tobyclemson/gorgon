@@ -9,6 +9,15 @@ jobs:
       - run: ./scripts/ci/common/install-git-crypt.sh
       - run: ./scripts/ci/common/install-goenv.sh
       - run: ./scripts/ci/steps/test.sh
+  prerelease:
+    working_directory: ~/gorgon
+    docker:
+      - image: ruby:2.4.7
+    steps:
+      - checkout
+      - run: ./scripts/ci/common/install-git-crypt.sh
+      - run: ./scripts/ci/common/install-goenv.sh
+      - run: ./scripts/ci/steps/prerelease.sh
   release:
     working_directory: ~/gorgon
     docker:
@@ -27,7 +36,22 @@ workflows:
           filters:
             branches:
               only: master
-#      - release:
-#          filters:
-#            branches:
-#              only: master
+      - prerelease:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+      - hold:
+          type: approval
+          requires:
+            - prerelease
+          filters:
+            branches:
+              only: master
+      - release:
+          requires:
+            - hold
+          filters:
+            branches:
+              only: master
