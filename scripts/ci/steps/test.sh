@@ -20,6 +20,11 @@ set -e
 
 git crypt unlock
 
+export GOENV_ROOT="$HOME/.goenv"
+export PATH="$GOENV_ROOT/bin:$PATH"
+
+eval "$(goenv init -)"
+
 export GOROOT="$( goenv prefix )"
 export GOPATH="$HOME/go/$(cat .go-version)"
 
