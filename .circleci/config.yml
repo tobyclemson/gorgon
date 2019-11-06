@@ -1,7 +1,7 @@
 version: 2
 jobs:
   test:
-    working_directory: ~/terraform-aws-encryption-bucket
+    working_directory: ~/gorgon
     docker:
       - image: ruby:2.4.7
     steps:
@@ -10,7 +10,7 @@ jobs:
       - run: ./scripts/ci/common/install-goenv.sh
       - run: ./scripts/ci/steps/test.sh
   release:
-    working_directory: ~/terraform-aws-encryption-bucket
+    working_directory: ~/gorgon
     docker:
       - image: ruby:2.4.7
     steps:
