@@ -25,6 +25,8 @@ export PATH="$GOENV_ROOT/bin:$PATH"
 
 eval "$(goenv init -)"
 
+goenv install
+
 export GOROOT="$( goenv prefix )"
 export GOPATH="$HOME/go/$(cat .go-version)"
 
