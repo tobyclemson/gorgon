@@ -31,4 +31,7 @@ export GOPATH="$HOME/go/$(cat .go-version)"
 export PATH="$GOROOT/bin:$PATH"
 export PATH="$GOPATH/bin:$PATH"
 
+gem install bundler
+bundle install
+
 rake
