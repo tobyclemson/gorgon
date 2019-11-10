@@ -1,8 +1,12 @@
 require 'rake'
 require 'yaml'
 require 'git'
+require 'erb'
 require 'semantic'
 require 'octokit'
+require 'open-uri'
+require 'digest'
+require 'ostruct'
 
 require_relative 'lib/platform'
 require_relative 'lib/version'
@@ -134,6 +138,55 @@ namespace :test do
       puts "Running end-to-end tests..."
       sh("bash -c \"#{binary_path_env_var} go test -v #{packages}\"")
       puts
+    end
+  end
+end
+
+namespace :homebrew do
+  namespace :formula do
+    desc "Generate homebrew formula for a new version of the CLI tool"
+    task :generate, [:version] do |_, args|
+      version = args.version || latest_version
+
+      puts "Generating homebrew formula for version: #{version}"
+      url = "https://github.com/tobyclemson/gorgon/archive/#{version}.tar.gz"
+
+      mkdir_p("build/dist")
+      open("build/dist/#{version}.tar.gz", 'wb') do |file|
+        file << open(url).read
+      end
+
+      checksum = Digest::SHA256.file("build/dist/#{version}.tar.gz")
+
+      template = ERB.new(File.read("templates/formula.rb.erb"))
+
+      mkdir_p("build/formula")
+      open('build/formula/gorgon.rb', 'w') do |file|
+        file << template.result(
+            OpenStruct
+                .new(version: version, checksum: checksum)
+                .instance_eval { binding })
+      end
+    end
+
+    desc "Push a new homebrew formula for a new version of the CLI tool"
+    task :push, [:version] do |_, args|
+      version = args.version || latest_version
+
+      Rake::Task['homebrew:formula:generate'].invoke(version)
+
+      puts "Pushing homebrew formula for version: #{version}"
+      mkdir_p "build/repos"
+      repo = Git.clone(
+          'git@github.com:tobyclemson/homebrew-utils.git',
+          'homebrew-utils',
+          path: 'build/repos')
+
+      FileUtils.cp('build/formula/gorgon.rb', 'build/repos/homebrew-utils')
+
+      repo.add(all: true)
+      repo.commit("Updating formula for version #{version}")
+      repo.push
     end
   end
 end
