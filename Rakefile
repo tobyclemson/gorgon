@@ -23,7 +23,7 @@ namespace :tools do
     desc "Install gox"
     task :gox do
       puts "Installing gox..."
-      sh('bash -c "go get github.com/mitchellh/gox"')
+      sh('bash -c "env && go get github.com/mitchellh/gox"')
       puts
     end
 
@@ -73,7 +73,7 @@ namespace :cli do
     switches = "#{osarch_switch} #{output_switch} #{ldflags_switch}"
 
     puts "Building CLI with version: #{version}..."
-    sh("bash -c \"gox #{switches} #{package}\"")
+    sh("bash -c \"env && gox #{switches} #{package}\"")
     puts
   end
 
