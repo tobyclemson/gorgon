@@ -7,7 +7,7 @@ require 'octokit'
 require_relative 'lib/platform'
 require_relative 'lib/version'
 
-task :default => %w(clean all:format all:vet cli:build test:end_to_end:run)
+task :default => %w(clean all:format all:vet cli:build:all test:end_to_end:run)
 
 task :clean do
   puts "Cleaning temporary directories..."
@@ -23,7 +23,7 @@ namespace :tools do
     desc "Install gox"
     task :gox do
       puts "Installing gox..."
-      sh('bash -c "env && go get github.com/mitchellh/gox"')
+      sh('bash -c "go get github.com/mitchellh/gox"')
       puts
     end
 
@@ -59,29 +59,29 @@ namespace :cli do
     puts
   end
 
-  desc "Build the CLI tool"
-  task :build,
-      [:version] => %w(tools:install:all dependencies:vendor) do |_, args|
-    version = args.version || next_prerelease_version
-    os_arches = 'linux/amd64 darwin/amd64 windows/amd64'
-    output_dir = "build/bin/#{version}_{{.OS}}_{{.Arch}}/{{.Dir}}"
-    package = "github.com/tobyclemson/gorgon"
+  namespace :build do
+    desc "Build the CLi tool for OS X"
+    task :darwin,
+        [:version] => %w(tools:install:all dependencies:vendor) do |_, args|
+      version = args.version || next_prerelease_version
 
-    osarch_switch = "-osarch='#{os_arches}'"
-    output_switch = "-output='#{output_dir}'"
-    ldflags_switch = "-ldflags '-X main.Version=#{version}'"
-    switches = "#{osarch_switch} #{output_switch} #{ldflags_switch}"
+      build_version(version, os_arches: 'darwin/amd64')
+    end
 
-    puts "Building CLI with version: #{version}..."
-    sh("bash -c \"env && gox #{switches} #{package}\"")
-    puts
+    desc "Build the CLI tool for all OSs and architectures"
+    task :all,
+        [:version] => %w(tools:install:all dependencies:vendor) do |_, args|
+      version = args.version || next_prerelease_version
+
+      build_version(version)
+    end
   end
 
   desc "Pre-release a new version of the CLI tool"
   task :prerelease do
     version = next_prerelease_version
 
-    Rake::Task["cli:build"].invoke(version)
+    Rake::Task["cli:build:all"].invoke(version)
 
     release_version(version, prerelease: true)
   end
@@ -90,7 +90,7 @@ namespace :cli do
   task :release do
     version = next_release_version
 
-    Rake::Task["cli:build"].invoke(version)
+    Rake::Task["cli:build:all"].invoke(version)
 
     release_version(version, prerelease: false)
   end
@@ -164,7 +164,23 @@ def next_release_version
   latest_version.release!.to_s
 end
 
-def release_version(version, options)
+def build_version(version, options = {})
+  os_arches = options[:os_arches] ||
+      'linux/amd64 darwin/amd64 windows/amd64'
+  output_dir = "build/bin/#{version}_{{.OS}}_{{.Arch}}/{{.Dir}}"
+  package = "github.com/tobyclemson/gorgon"
+
+  osarch_switch = "-osarch='#{os_arches}'"
+  output_switch = "-output='#{output_dir}'"
+  ldflags_switch = "-ldflags '-X main.Version=#{version}'"
+  switches = "#{osarch_switch} #{output_switch} #{ldflags_switch}"
+
+  puts "Building CLI with version: #{version}..."
+  sh("bash -c \"gox #{switches} #{package}\"")
+  puts
+end
+
+def release_version(version, options = {})
   github_credentials = YAML.load_file('secrets/github/credentials.yaml')
   github_token = github_credentials['github_token']
 
