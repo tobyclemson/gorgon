@@ -205,6 +205,7 @@ end
 
 def latest_version
   repo.tags.map do |tag|
+    puts tag
     Semantic::Version.new(tag.name)
   end.max
 end
