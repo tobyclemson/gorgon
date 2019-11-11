@@ -184,8 +184,10 @@ namespace :homebrew do
 
       FileUtils.cp('build/formula/gorgon.rb', 'build/repos/homebrew-utils')
 
-      repo.add(all: true)
-      repo.commit("Updating formula for version #{version}")
+      repo.commit(
+          "Updating formula for version #{version}",
+          all: true,
+          author: "CI <ci@tobyclemson.com>")
       repo.push
     end
   end
