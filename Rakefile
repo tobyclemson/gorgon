@@ -171,7 +171,7 @@ namespace :homebrew do
 
     desc "Push a new homebrew formula for a new version of the CLI tool"
     task :push, [:version] do |_, args|
-      version = args.version || latest_version
+      version = args.version || next_release_version
 
       Rake::Task['homebrew:formula:generate'].invoke(version)
 
@@ -205,8 +205,6 @@ end
 
 def latest_version
   repo.tags.map do |tag|
-    require 'pp'
-    pp tag
     Semantic::Version.new(tag.name)
   end.max
 end
