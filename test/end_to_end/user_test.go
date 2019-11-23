@@ -15,7 +15,7 @@ import (
 func TestUserListReposCommand(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
-	user := "tobyclemson"
+	user := "chrisyeoward"
 
 	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
 	assert.Nil(t, err)
@@ -29,7 +29,7 @@ func TestUserListReposCommand(t *testing.T) {
 	commandOutput := command.OutputFrom(stdout)
 
 	assert.Equal(t, commandOutput.Header,
-		"Listing repositories for user: 'tobyclemson'")
+		"Listing repositories for user: 'chrisyeoward'")
 	assert.Len(t, commandOutput.Body, len(expectedRepos))
 	assert.Equal(t, commandOutput.Body, expectedRepoNames)
 }
@@ -37,7 +37,7 @@ func TestUserListReposCommand(t *testing.T) {
 func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
-	user := "tobyclemson"
+	user := "chrisyeoward"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
 	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
@@ -69,7 +69,7 @@ func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 func TestUserSyncReposCommandForPopulatedDirectory(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
-	user := "tobyclemson"
+	user := "chrisyeoward"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
 	err := os.Setenv("GORGON_GITHUB_TOKEN", token)

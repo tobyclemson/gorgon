@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"github.com/google/go-github/v28/github"
 	"gopkg.in/src-d/go-git.v4"
@@ -9,13 +10,48 @@ import (
 	"os"
 )
 
-func Clone(repository *github.Repository, destination string) error {
-	auth, err := ssh.DefaultAuthBuilder("git")
+func determineURL(
+	protocol Protocol,
+	repository *github.Repository,
+) (string, error) {
+	switch protocol {
+	case SSH:
+		return *repository.SSHURL, nil
+	case HTTPS:
+		return *repository.CloneURL, nil
+	case Git:
+		return *repository.GitURL, nil
+	}
+	return "", errors.New("Unknown protocol: " + protocol.String())
+}
+
+func determineAuth(
+	protocol Protocol,
+) (transport.AuthMethod, error) {
+	switch protocol {
+	case SSH:
+		return ssh.DefaultAuthBuilder("git")
+	default:
+		return nil, nil
+	}
+}
+
+func Clone(
+	repository *github.Repository,
+	destination string,
+	protocol Protocol,
+) error {
+	url, err := determineURL(protocol, repository)
 	if err != nil {
 		return err
 	}
+	auth, err := determineAuth(protocol)
+	if err != nil {
+		return err
+	}
+
 	cloneOptions := &git.CloneOptions{
-		URL:      *repository.SSHURL,
+		URL:      url,
 		Auth:     auth,
 		Progress: os.Stdout,
 	}

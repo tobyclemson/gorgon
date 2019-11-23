@@ -25,6 +25,11 @@ var organizationReposSyncCommand = &cobra.Command{
 			return err
 		}
 
+		protocol, err := config.Protocol(cmd)
+		if err != nil {
+			return err
+		}
+
 		targetDirectory, err := config.TargetDirectory(cmd, name)
 		if err != nil {
 			return err
@@ -46,7 +51,7 @@ var organizationReposSyncCommand = &cobra.Command{
 				repositoryDirectory :=
 					filepath.Join(targetDirectory, *repository.Name)
 				if _, err := os.Stat(repositoryDirectory); os.IsNotExist(err) {
-					err = git.Clone(repository, repositoryDirectory)
+					err = git.Clone(repository, repositoryDirectory, protocol)
 					if err != nil {
 						return err
 					}
@@ -74,4 +79,11 @@ func init() {
 			"directory into which repositories should be synced, defaults "+
 				"to a directory under the working directory with the name of "+
 				"the organization")
+	organizationReposSyncCommand.Flags().
+		StringP(
+			"protocol",
+			"p",
+			"ssh",
+			"protocol to use when cloning repositories, one of 'ssh', 'git' "+
+				"or 'https', defaults to 'ssh'")
 }
