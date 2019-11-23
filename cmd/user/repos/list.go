@@ -1,4 +1,4 @@
-package organization
+package repos
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"github.com/tobyclemson/gorgon/github"
 )
 
-var organizationListReposCommand = &cobra.Command{
-	Use:   "list-repos",
-	Short: "List repositories for GitHub organization",
+var userReposListCommand = &cobra.Command{
+	Use:   "list",
+	Short: "List repositories for GitHub user",
 	Long:  "Lists all available repositories for a given GitHub organization",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -17,9 +17,9 @@ var organizationListReposCommand = &cobra.Command{
 		name := args[0]
 
 		repositories, err :=
-			github.ListOrganizationRepositories(name, credentials)
+			github.ListUserRepositories(name, credentials)
 		if err == nil {
-			fmt.Printf("Listing repositories for organization: '%v'\n", name)
+			fmt.Printf("Listing repositories for user: '%v'\n", name)
 			fmt.Println()
 			for _, repository := range repositories {
 				fmt.Println(*repository.Name)

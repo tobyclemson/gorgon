@@ -21,7 +21,7 @@ func TestUserListReposCommand(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, stdout, _ := command.Run(t,
-		binary, "user", "list-repos", user)
+		binary, "user", "repos", "list", user)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
@@ -46,7 +46,7 @@ func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 	expectedRepos := github.ListUserRepositories(t, user, token)
 
 	_, stdout, _ := command.Run(t,
-		binary, "user", "sync-repos",
+		binary, "user", "repos", "sync",
 		"-d", directory,
 		user)
 
@@ -83,7 +83,7 @@ func TestUserSyncReposCommandForPopulatedDirectory(t *testing.T) {
 	}
 
 	_, stdout, _ := command.Run(t,
-		binary, "user", "sync-repos",
+		binary, "user", "repos", "sync",
 		"-d", directory,
 		user)
 

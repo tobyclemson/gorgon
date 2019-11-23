@@ -25,7 +25,7 @@ func TestOrganizationListReposCommand(t *testing.T) {
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
 
 	_, stdout, _ := command.Run(t,
-		binary, "organization", "list-repos", organization)
+		binary, "organization", "repos", "list", organization)
 
 	commandOutput := command.OutputFrom(stdout)
 
@@ -48,7 +48,7 @@ func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
 		github.ListOrganizationRepositories(t, organization, token)
 
 	_, stdout, _ := command.Run(t,
-		binary, "organization", "sync-repos",
+		binary, "organization", "repos", "sync",
 		"-d", directory,
 		organization)
 
@@ -86,7 +86,7 @@ func TestOrganizationSyncReposCommandForPopulatedDirectory(t *testing.T) {
 	}
 
 	_, stdout, _ := command.Run(t,
-		binary, "organization", "sync-repos",
+		binary, "organization", "repos", "sync",
 		"-d", directory,
 		organization)
 

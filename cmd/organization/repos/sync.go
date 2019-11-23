@@ -1,4 +1,4 @@
-package organization
+package repos
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 )
 
-var organizationSyncReposCommand = &cobra.Command{
-	Use:   "sync-repos",
+var organizationReposSyncCommand = &cobra.Command{
+	Use:   "sync",
 	Short: "Synchronizes repositories for GitHub organization",
 	Long: "Synchronises all repositories for a given GitHub organization " +
 		"with a local directory, which may or may not already contain " +
@@ -66,7 +66,7 @@ var organizationSyncReposCommand = &cobra.Command{
 }
 
 func init() {
-	organizationSyncReposCommand.Flags().
+	organizationReposSyncCommand.Flags().
 		StringP(
 			"target-directory",
 			"d",

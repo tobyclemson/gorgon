@@ -1,4 +1,4 @@
-package user
+package repos
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 )
 
-var userSyncReposCommand = &cobra.Command{
-	Use:   "sync-repos",
+var userReposSyncCommand = &cobra.Command{
+	Use:   "sync",
 	Short: "Synchronizes repositories for GitHub user",
 	Long: "Synchronises all repositories for a given GitHub user " +
 		"with a local directory, which may or may not already contain " +
@@ -66,7 +66,7 @@ var userSyncReposCommand = &cobra.Command{
 }
 
 func init() {
-	userSyncReposCommand.Flags().
+	userReposSyncCommand.Flags().
 		StringP(
 			"target-directory",
 			"d",
