@@ -2,8 +2,8 @@ package git
 
 import (
 	"fmt"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"os"
 )
 

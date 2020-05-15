@@ -1,7 +1,7 @@
 package github
 
 import (
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v31/github"
 	"testing"
 )
 
