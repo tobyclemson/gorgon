@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/google/go-github/v31/github"
 	"os"
 )
@@ -23,12 +22,6 @@ func determineURL(
 		return *repository.GitURL, nil
 	}
 	return "", errors.New("Unknown protocol: " + protocol.String())
-}
-
-func determineAuth(
-	protocol Protocol,
-) (transport.AuthMethod, error) {
-	return ssh.DefaultAuthBuilder("git")
 }
 
 func Clone(
