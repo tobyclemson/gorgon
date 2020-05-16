@@ -1,5 +1,4 @@
 require 'rake'
-require 'rake_ssh'
 require 'yaml'
 require 'git'
 require 'erb'
@@ -8,6 +7,7 @@ require 'octokit'
 require 'open-uri'
 require 'digest'
 require 'ostruct'
+require 'rake_ssh'
 
 require_relative 'lib/platform'
 require_relative 'lib/version'
