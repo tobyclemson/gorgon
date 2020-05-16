@@ -13,4 +13,4 @@ source "./scripts/ci/helpers/setup-goenv.sh"
 source "./scripts/ci/helpers/unlock-git-crypt.sh"
 source "./scripts/ci/helpers/install-gems.sh"
 
-rake cli:prerelease
+bundle exec rake cli:prerelease

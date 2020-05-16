@@ -15,4 +15,4 @@ source "./scripts/ci/helpers/install-gems.sh"
 
 env
 
-rake
+bundle exec rake

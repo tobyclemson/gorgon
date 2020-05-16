@@ -13,5 +13,5 @@ source "./scripts/ci/helpers/setup-goenv.sh"
 source "./scripts/ci/helpers/unlock-git-crypt.sh"
 source "./scripts/ci/helpers/install-gems.sh"
 
-rake cli:release
-rake homebrew:formula:push
+bundle exec rake cli:release
+bundle exec rake homebrew:formula:push
