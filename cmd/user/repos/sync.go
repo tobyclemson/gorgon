@@ -8,6 +8,7 @@ import (
 	"github.com/tobyclemson/gorgon/github"
 	"github.com/tobyclemson/gorgon/ssh"
 	"os"
+	"os/user"
 	"path/filepath"
 )
 
@@ -84,6 +85,12 @@ var userReposSyncCommand = &cobra.Command{
 }
 
 func init() {
+	currentUser, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	homeDirectory := currentUser.HomeDir
+
 	userReposSyncCommand.Flags().
 		StringP(
 			"target-directory",
@@ -102,7 +109,7 @@ func init() {
 	userReposSyncCommand.Flags().
 		StringP("ssh-private-key-path",
 			"i",
-			"~/.ssh/id_rsa",
+			fmt.Sprintf("%v/.ssh/id_rsa", homeDirectory),
 			"path to SSH private key to use when using SSH private "+
-				"key authentication, defaults to \"~/.ssh/id_rsa\"")
+				"key authentication")
 }
