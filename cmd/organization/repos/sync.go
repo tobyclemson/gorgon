@@ -13,7 +13,7 @@ import (
 var organizationReposSyncCommand = &cobra.Command{
 	Use:   "sync",
 	Short: "Synchronizes repositories for GitHub organization",
-	Long: "Synchronises all repositories for a given GitHub organization " +
+	Long: "Synchronizes all repositories for a given GitHub organization " +
 		"with a local directory, which may or may not already contain " +
 		"repositories from the organization.",
 	Args: cobra.ExactArgs(1),

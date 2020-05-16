@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func TestUserListReposCommand(t *testing.T) {
+func TestUserReposListCommand(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
 	user := "chrisyeoward"
@@ -20,8 +20,9 @@ func TestUserListReposCommand(t *testing.T) {
 	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
 	assert.Nil(t, err)
 
-	_, stdout, _ := command.Run(t,
+	_, stdout, _, err := command.Run(t,
 		binary, "user", "repos", "list", user)
+	assert.Nil(t, err)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
@@ -34,7 +35,7 @@ func TestUserListReposCommand(t *testing.T) {
 	assert.Equal(t, commandOutput.Body, expectedRepoNames)
 }
 
-func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
+func TestUserReposSyncCommandForFreshDirectory(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
 	user := "chrisyeoward"
@@ -45,10 +46,11 @@ func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 
-	_, stdout, _ := command.Run(t,
+	_, stdout, _, err := command.Run(t,
 		binary, "user", "repos", "sync",
 		"-d", directory,
 		user)
+	assert.Nil(t, err)
 
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
 	actualRepoNames := fs.ListDirectories(t, directory)
@@ -66,7 +68,7 @@ func TestUserSyncReposCommandForFreshDirectory(t *testing.T) {
 	assert.Subset(t, commandOutput.Body, expectedRepoNames)
 }
 
-func TestUserSyncReposCommandForPopulatedDirectory(t *testing.T) {
+func TestUserReposSyncCommandForPopulatedDirectory(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
 	user := "chrisyeoward"
@@ -82,10 +84,11 @@ func TestUserSyncReposCommandForPopulatedDirectory(t *testing.T) {
 		git.CloneRepository(t, directory, *repo.Name, *repo.SSHURL)
 	}
 
-	_, stdout, _ := command.Run(t,
+	_, stdout, _, err := command.Run(t,
 		binary, "user", "repos", "sync",
 		"-d", directory,
 		user)
+	assert.Nil(t, err)
 
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
 	actualRepoNames := fs.ListDirectories(t, directory)

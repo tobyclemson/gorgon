@@ -2,7 +2,6 @@ package command
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"github.com/tobyclemson/gorgon/test/support/fs"
 	"os/exec"
 	"path/filepath"
@@ -25,7 +24,7 @@ func Run(
 	t *testing.T,
 	name string,
 	args ...string,
-) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer) {
+) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer, error) {
 	workingDirectory := fs.GetWorkingDirectory(t)
 	binary := filepath.Join(workingDirectory, "..", "..", name)
 
@@ -36,7 +35,6 @@ func Run(
 	err := cmd.Run()
 	logLines(t, "Standard Output", outputBuffer)
 	logLines(t, "Standard Error", errorBuffer)
-	assert.Nil(t, err)
 
-	return cmd, outputBuffer, errorBuffer
+	return cmd, outputBuffer, errorBuffer, err
 }

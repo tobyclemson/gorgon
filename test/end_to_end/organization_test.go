@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func TestOrganizationListReposCommand(t *testing.T) {
+func TestOrganizationReposListCommand(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
 	organization := "javafunk"
@@ -24,8 +24,9 @@ func TestOrganizationListReposCommand(t *testing.T) {
 		github.ListOrganizationRepositories(t, organization, token)
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
 
-	_, stdout, _ := command.Run(t,
+	_, stdout, _, err := command.Run(t,
 		binary, "organization", "repos", "list", organization)
+	assert.Nil(t, err)
 
 	commandOutput := command.OutputFrom(stdout)
 
@@ -47,7 +48,7 @@ func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
 	expectedRepos :=
 		github.ListOrganizationRepositories(t, organization, token)
 
-	_, stdout, _ := command.Run(t,
+	_, stdout, _, err := command.Run(t,
 		binary, "organization", "repos", "sync",
 		"-d", directory,
 		organization)
@@ -68,7 +69,7 @@ func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
 	assert.Subset(t, commandOutput.Body, expectedRepoNames)
 }
 
-func TestOrganizationSyncReposCommandForPopulatedDirectory(t *testing.T) {
+func TestOrganizationReposSyncCommandForPopulatedDirectory(t *testing.T) {
 	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
 	organization := "javafunk"
@@ -85,10 +86,11 @@ func TestOrganizationSyncReposCommandForPopulatedDirectory(t *testing.T) {
 		git.CloneRepository(t, directory, *repo.Name, *repo.SSHURL)
 	}
 
-	_, stdout, _ := command.Run(t,
+	_, stdout, _, err := command.Run(t,
 		binary, "organization", "repos", "sync",
 		"-d", directory,
 		organization)
+	assert.Nil(t, err)
 
 	expectedRepoNames := github.ToSortedRepositoryNames(expectedRepos)
 	actualRepoNames := fs.ListDirectories(t, directory)

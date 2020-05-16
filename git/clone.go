@@ -28,12 +28,7 @@ func determineURL(
 func determineAuth(
 	protocol Protocol,
 ) (transport.AuthMethod, error) {
-	switch protocol {
-	case SSH:
-		return ssh.DefaultAuthBuilder("git")
-	default:
-		return nil, nil
-	}
+	return ssh.DefaultAuthBuilder("git")
 }
 
 func Clone(
