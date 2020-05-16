@@ -3,12 +3,15 @@ package git
 import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/tobyclemson/gorgon/ssh"
 	"os"
 )
 
-func Pull(repositoryDirectory string) error {
-	auth, err := ssh.DefaultAuthBuilder("git")
+func Pull(
+	repositoryDirectory string,
+	sshOptions ssh.Options,
+) error {
+	auth, err := determineAuth(SSH, sshOptions)
 	if err != nil {
 		return err
 	}

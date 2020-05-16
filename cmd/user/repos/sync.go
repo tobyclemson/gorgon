@@ -6,6 +6,7 @@ import (
 	"github.com/tobyclemson/gorgon/config"
 	"github.com/tobyclemson/gorgon/git"
 	"github.com/tobyclemson/gorgon/github"
+	"github.com/tobyclemson/gorgon/ssh"
 	"os"
 	"path/filepath"
 )
@@ -30,12 +31,18 @@ var userReposSyncCommand = &cobra.Command{
 			return err
 		}
 
+		sshPrivateKeyPath, err := config.SSHPrivateKeyPath(cmd)
+		if err != nil {
+			return err
+		}
+
 		targetDirectory, err := config.TargetDirectory(cmd, name)
 		if err != nil {
 			return err
 		}
 
 		credentials := github.Credentials{Token: token}
+		sshOptions := ssh.Options{PrivateKeyPath: sshPrivateKeyPath}
 
 		repositories, err :=
 			github.ListUserRepositories(name, credentials)
@@ -51,12 +58,18 @@ var userReposSyncCommand = &cobra.Command{
 				repositoryDirectory :=
 					filepath.Join(targetDirectory, *repository.Name)
 				if _, err := os.Stat(repositoryDirectory); os.IsNotExist(err) {
-					err = git.Clone(repository, repositoryDirectory, protocol)
+					err = git.Clone(
+						repository,
+						repositoryDirectory,
+						protocol,
+						sshOptions)
 					if err != nil {
 						return err
 					}
 				} else {
-					err = git.Pull(repositoryDirectory)
+					err = git.Pull(
+						repositoryDirectory,
+						sshOptions)
 					if err != nil {
 						return err
 					}
@@ -84,6 +97,12 @@ func init() {
 			"protocol",
 			"p",
 			"ssh",
-			"protocol to use when cloning repositories, one of 'ssh', 'git' "+
-				"or 'https', defaults to 'ssh'")
+			"protocol to use when cloning repositories, one of "+
+				"\"ssh\", \"git\" or \"https\"")
+	userReposSyncCommand.Flags().
+		StringP("ssh-private-key-path",
+			"i",
+			"~/.ssh/id_rsa",
+			"path to SSH private key to use when using SSH private "+
+				"key authentication, defaults to \"~/.ssh/id_rsa\"")
 }

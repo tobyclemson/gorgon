@@ -36,12 +36,17 @@ func TestUserReposListCommand(t *testing.T) {
 }
 
 func TestUserReposSyncCommandForFreshDirectory(t *testing.T) {
-	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
+	token := github.GetToken(t)
+	sshPrivateKeyPath := support.GetSSHPrivateKeyPath(t)
 	user := "chrisyeoward"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
-	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	err := os.Setenv(
+		"GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
+	err = os.Setenv(
+		"GORGON_SSH_PRIVATE_KEY_PATH", sshPrivateKeyPath)
 	assert.Nil(t, err)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
@@ -69,19 +74,28 @@ func TestUserReposSyncCommandForFreshDirectory(t *testing.T) {
 }
 
 func TestUserReposSyncCommandForPopulatedDirectory(t *testing.T) {
-	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
+	sshPrivateKeyPath := support.GetSSHPrivateKeyPath(t)
+	token := github.GetToken(t)
 	user := "chrisyeoward"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
-	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	err := os.Setenv(
+		"GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
+	err = os.Setenv(
+		"GORGON_SSH_PRIVATE_KEY_PATH", sshPrivateKeyPath)
 	assert.Nil(t, err)
 
 	expectedRepos := github.ListUserRepositories(t, user, token)
 
 	for i := 0; i < 3; i++ {
 		repo := expectedRepos[i]
-		git.CloneRepository(t, directory, *repo.Name, *repo.SSHURL)
+		git.CloneRepository(t,
+			directory,
+			*repo.Name,
+			*repo.SSHURL,
+			sshPrivateKeyPath)
 	}
 
 	_, stdout, _, err := command.Run(t,

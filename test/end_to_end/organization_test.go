@@ -37,12 +37,17 @@ func TestOrganizationReposListCommand(t *testing.T) {
 }
 
 func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
-	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
+	sshPrivateKeyPath := support.GetSSHPrivateKeyPath(t)
+	token := github.GetToken(t)
 	organization := "javafunk"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
-	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	err := os.Setenv(
+		"GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
+	err = os.Setenv(
+		"GORGON_SSH_PRIVATE_KEY_PATH", sshPrivateKeyPath)
 	assert.Nil(t, err)
 
 	expectedRepos :=
@@ -70,12 +75,17 @@ func TestOrganizationSyncReposCommandForFreshDirectory(t *testing.T) {
 }
 
 func TestOrganizationReposSyncCommandForPopulatedDirectory(t *testing.T) {
-	token := github.GetToken(t)
 	binary := support.GetBinaryPath(t)
+	sshPrivateKeyPath := support.GetSSHPrivateKeyPath(t)
+	token := github.GetToken(t)
 	organization := "javafunk"
 	directory := fs.CreateTemporaryWorkDirectory(t)
 
-	err := os.Setenv("GORGON_GITHUB_TOKEN", token)
+	err := os.Setenv(
+		"GORGON_GITHUB_TOKEN", token)
+	assert.Nil(t, err)
+	err = os.Setenv(
+		"GORGON_SSH_PRIVATE_KEY_PATH", sshPrivateKeyPath)
 	assert.Nil(t, err)
 
 	expectedRepos :=
@@ -83,7 +93,11 @@ func TestOrganizationReposSyncCommandForPopulatedDirectory(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		repo := expectedRepos[i]
-		git.CloneRepository(t, directory, *repo.Name, *repo.SSHURL)
+		git.CloneRepository(t,
+			directory,
+			*repo.Name,
+			*repo.SSHURL,
+			sshPrivateKeyPath)
 	}
 
 	_, stdout, _, err := command.Run(t,

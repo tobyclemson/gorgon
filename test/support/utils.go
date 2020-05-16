@@ -21,3 +21,10 @@ func GetBinaryPath(t *testing.T) string {
 
 	return binary
 }
+
+func GetSSHPrivateKeyPath(t *testing.T) string {
+	token, found := os.LookupEnv("TEST_SSH_PRIVATE_KEY_PATH")
+	assert.True(t, found)
+
+	return token
+}

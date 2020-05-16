@@ -1,4 +1,5 @@
 require 'rake'
+require 'rake_ssh'
 require 'yaml'
 require 'git'
 require 'erb'
@@ -20,6 +21,13 @@ task :clean do
       .select { |file| /^[^.]/.match file }
       .each { |file| rm_rf(file) }
   puts
+end
+
+namespace :ssh_key do
+  RakeSSH.define_key_tasks(
+      path: 'secrets/github/',
+      comment: 'tobyclemson@gmail.com'
+  )
 end
 
 namespace :tools do
@@ -126,7 +134,10 @@ namespace :test do
 
       github_credentials = YAML.load_file('secrets/github/credentials.yaml')
       github_token = github_credentials['github_token']
-      ENV["TEST_GITHUB_TOKEN"] = github_token
+      ENV["TEST_GITHUB_TOKEN"] ||= github_token
+
+      ssh_private_key_path = "#{Dir.getwd}/secrets/ssh/ssh.private"
+      ENV["TEST_SSH_PRIVATE_KEY_PATH"] ||= ssh_private_key_path
 
       binary_os = Platform.os
       binary_architecture = Platform.architecture

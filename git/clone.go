@@ -6,6 +6,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/google/go-github/v31/github"
+	"github.com/tobyclemson/gorgon/ssh"
 	"os"
 )
 
@@ -28,12 +29,13 @@ func Clone(
 	repository *github.Repository,
 	destination string,
 	protocol Protocol,
+	sshOptions ssh.Options,
 ) error {
 	url, err := determineURL(protocol, repository)
 	if err != nil {
 		return err
 	}
-	auth, err := determineAuth(protocol)
+	auth, err := determineAuth(protocol, sshOptions)
 	if err != nil {
 		return err
 	}

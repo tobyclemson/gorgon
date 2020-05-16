@@ -2,11 +2,14 @@ package git
 
 import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	gitssh "github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/tobyclemson/gorgon/ssh"
 )
 
 func determineAuth(
 	protocol Protocol,
+	sshOptions ssh.Options,
 ) (transport.AuthMethod, error) {
-	return ssh.DefaultAuthBuilder("git")
+	return gitssh.NewPublicKeysFromFile(
+		"git", sshOptions.PrivateKeyPath, "")
 }

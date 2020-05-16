@@ -7,8 +7,13 @@ import (
 	"testing"
 )
 
-func CloneRepository(t *testing.T, directory string, name string, url string) {
-	auth, err := ssh.DefaultAuthBuilder("git")
+func CloneRepository(
+	t *testing.T,
+	directory string,
+	name string,
+	url string,
+	sshPrivateKeyPath string) {
+	auth, err := ssh.NewPublicKeysFromFile("git", sshPrivateKeyPath, "")
 	if err != nil {
 		t.Fatalf("Failed to build SSH authentication: %v", err)
 	}

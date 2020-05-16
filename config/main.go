@@ -6,6 +6,14 @@ import (
 	"path/filepath"
 )
 
+func ensureAbsolute(path string) (string, error) {
+	if filepath.IsAbs(path) {
+		return path, nil
+	} else {
+		return filepath.Abs(path)
+	}
+}
+
 func GithubToken(cmd *cobra.Command) (string, error) {
 	return cmd.Flag("github-token").Value.String(), nil
 }
@@ -14,8 +22,12 @@ func Protocol(cmd *cobra.Command) (git.Protocol, error) {
 	return git.ToProtocol(cmd.Flag("protocol").Value.String())
 }
 
+func SSHPrivateKeyPath(cmd *cobra.Command) (string, error) {
+	return ensureAbsolute(
+		cmd.Flag("ssh-private-key-path").Value.String())
+}
+
 func TargetDirectory(cmd *cobra.Command, or string) (string, error) {
-	err := error(nil)
 	targetDirectory := cmd.Flag("target-directory").Value.String()
 	resolvedDirectory := ""
 	if targetDirectory == "" {
@@ -23,11 +35,5 @@ func TargetDirectory(cmd *cobra.Command, or string) (string, error) {
 	} else {
 		resolvedDirectory = targetDirectory
 	}
-	if !filepath.IsAbs(resolvedDirectory) {
-		resolvedDirectory, err = filepath.Abs(resolvedDirectory)
-		if err != nil {
-			return "", err
-		}
-	}
-	return resolvedDirectory, nil
+	return ensureAbsolute(resolvedDirectory)
 }
