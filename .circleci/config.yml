@@ -3,7 +3,7 @@ jobs:
   test:
     working_directory: ~/gorgon
     docker:
-      - image: ruby:2.4.7
+      - image: ruby:2.6.0
     steps:
       - checkout
       - run: ./scripts/ci/common/install-git-crypt.sh
@@ -12,7 +12,7 @@ jobs:
   prerelease:
     working_directory: ~/gorgon
     docker:
-      - image: ruby:2.4.7
+      - image: ruby:2.6.0
     steps:
       - checkout
       - run: ./scripts/ci/common/install-git-crypt.sh
@@ -21,7 +21,7 @@ jobs:
   release:
     working_directory: ~/gorgon
     docker:
-      - image: ruby:2.4.7
+      - image: ruby:2.6.0
     steps:
       - checkout
       - add_ssh_keys
