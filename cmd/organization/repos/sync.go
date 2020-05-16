@@ -50,8 +50,8 @@ var organizationReposSyncCommand = &cobra.Command{
 		credentials := github.Credentials{Token: token}
 		sshOptions := ssh.Options{
 			AuthenticationMethod: sshAuthenticationMethod,
-			PrivateKeyPath: sshPrivateKeyPath,
-			PrivateKeyPassword: sshPrivateKeyPassword,
+			PrivateKeyPath:       sshPrivateKeyPath,
+			PrivateKeyPassword:   sshPrivateKeyPassword,
 		}
 
 		repositories, err :=
@@ -129,7 +129,7 @@ func init() {
 				"key authentication")
 	organizationReposSyncCommand.Flags().
 		StringP("ssh-private-key-password",
-			"i",
+			"w",
 			"",
 			"password to use to decrypt the SSH private key when "+
 				"using SSH private key authentication")

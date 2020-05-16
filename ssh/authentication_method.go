@@ -32,4 +32,3 @@ func ToAuthenticationMethod(value string) (AuthenticationMethod, error) {
 	}
 	return -1, errors.New("Unknown authentication method name: " + value)
 }
-
