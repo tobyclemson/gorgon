@@ -32,7 +32,12 @@ var organizationReposSyncCommand = &cobra.Command{
 			return err
 		}
 
+		sshAuthenticationMethod, err := config.SSHAuthenticationMethod(cmd)
 		sshPrivateKeyPath, err := config.SSHPrivateKeyPath(cmd)
+		if err != nil {
+			return err
+		}
+		sshPrivateKeyPassword, err := config.SSHPrivateKeyPassword(cmd)
 		if err != nil {
 			return err
 		}
@@ -43,7 +48,11 @@ var organizationReposSyncCommand = &cobra.Command{
 		}
 
 		credentials := github.Credentials{Token: token}
-		sshOptions := ssh.Options{PrivateKeyPath: sshPrivateKeyPath}
+		sshOptions := ssh.Options{
+			AuthenticationMethod: sshAuthenticationMethod,
+			PrivateKeyPath: sshPrivateKeyPath,
+			PrivateKeyPassword: sshPrivateKeyPassword,
+		}
 
 		repositories, err :=
 			github.ListOrganizationRepositories(name, credentials)
@@ -104,12 +113,24 @@ func init() {
 			"protocol",
 			"p",
 			"ssh",
-			"protocol to use when cloning repositories, one of "+
+			"protocol to use when interacting with remotes, one of "+
 				"\"ssh\", \"git\" or \"https\"")
+	organizationReposSyncCommand.Flags().
+		StringP("ssh-authentication-method",
+			"m",
+			"agent",
+			"SSH authentication method to use when interacting with "+
+				"remotes, one of \"agent\" or \"key\"")
 	organizationReposSyncCommand.Flags().
 		StringP("ssh-private-key-path",
 			"i",
 			fmt.Sprintf("%v/.ssh/id_rsa", homeDirectory),
 			"path to SSH private key to use when using SSH private "+
 				"key authentication")
+	organizationReposSyncCommand.Flags().
+		StringP("ssh-private-key-password",
+			"i",
+			"",
+			"password to use to decrypt the SSH private key when "+
+				"using SSH private key authentication")
 }

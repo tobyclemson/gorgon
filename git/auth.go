@@ -10,6 +10,14 @@ func determineAuth(
 	protocol Protocol,
 	sshOptions ssh.Options,
 ) (transport.AuthMethod, error) {
-	return gitssh.NewPublicKeysFromFile(
-		"git", sshOptions.PrivateKeyPath, "")
+	authenticationMethod := sshOptions.AuthenticationMethod
+	username := "git"
+	if authenticationMethod == ssh.Agent {
+		return gitssh.NewSSHAgentAuth(username)
+	} else {
+		return gitssh.NewPublicKeysFromFile(
+			username,
+			sshOptions.PrivateKeyPath,
+			sshOptions.PrivateKeyPassword)
+	}
 }
