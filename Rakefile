@@ -103,9 +103,9 @@ RakeGithub.define_repository_tasks(
   repository: 'tobyclemson/gorgon',
   ) do |t|
   github_config =
-    YAML.load_file('secrets/github/config.yaml')
+    YAML.load_file('secrets/github/credentials.yaml')
 
-  t.access_token = github_config['github_personal_access_token']
+  t.access_token = github_config['github_token']
   t.deploy_keys = [
     {
       title: 'CircleCI',
