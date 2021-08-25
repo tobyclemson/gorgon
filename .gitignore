@@ -2,6 +2,7 @@
 *.iws
 *.iml
 .idea/
+.bundle/
 gorgon
 build/
 work/*
