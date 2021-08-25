@@ -26,6 +26,7 @@ jobs:
       - image: ruby:2.7.2
     steps:
       - checkout
+      - add_ssh_keys
       - run: ./scripts/ci/common/upgrade-gpg.sh
       - run: ./scripts/ci/common/install-git-crypt.sh
       - run: ./scripts/ci/common/install-goenv.sh
