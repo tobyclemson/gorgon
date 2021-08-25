@@ -1,13 +1,16 @@
-require 'rake'
-require 'yaml'
-require 'git'
+require 'digest'
 require 'erb'
-require 'semantic'
+require 'git'
 require 'octokit'
 require 'open-uri'
-require 'digest'
 require 'ostruct'
+require 'rake'
+require 'rake_circle_ci'
+require 'rake_github'
+require 'rake_gpg'
 require 'rake_ssh'
+require 'semantic'
+require 'yaml'
 
 require_relative 'lib/platform'
 require_relative 'lib/version'
@@ -23,11 +26,103 @@ task :clean do
   puts
 end
 
-namespace :ssh_key do
-  RakeSSH.define_key_tasks(
-      path: 'secrets/github/',
+namespace :encryption do
+  namespace :directory do
+    desc 'Ensure CI secrets directory exists'
+    task :ensure do
+      FileUtils.mkdir_p('secrets/ci')
+    end
+  end
+
+  namespace :passphrase do
+    desc 'Generate encryption passphrase for CI GPG key'
+    task generate: ['directory:ensure'] do
+      File.open('secrets/ci/encryption.passphrase', 'w') do |f|
+        f.write(SecureRandom.base64(36))
+      end
+    end
+  end
+end
+
+namespace :keys do
+  namespace :deploy do
+    RakeSSH.define_key_tasks(
+      path: 'secrets/ci/',
       comment: 'tobyclemson@gmail.com'
-  )
+    )
+  end
+
+  namespace :secrets do
+    namespace :gpg do
+      RakeGPG.define_generate_key_task(
+        output_directory: 'secrets/ci',
+        name_prefix: 'gpg',
+        owner_name: 'Toby Clemson',
+        owner_email: 'tobyclemson@gmail.com',
+        owner_comment: 'gorgon CI Key'
+      )
+    end
+
+    task generate: ['gpg:generate']
+  end
+end
+
+namespace :secrets do
+  desc 'Regenerate all secrets'
+  task regenerate: %w[
+    encryption:passphrase:generate
+    keys:deploy:generate
+    keys:secrets:generate
+  ]
+end
+
+RakeCircleCI.define_project_tasks(
+  namespace: :circle_ci,
+  project_slug: 'github/tobyclemson/gorgon'
+) do |t|
+  circle_ci_config =
+    YAML.load_file('secrets/circle_ci/config.yaml')
+
+  t.api_token = circle_ci_config['circle_ci_api_token']
+  t.environment_variables = {
+    ENCRYPTION_PASSPHRASE:
+      File.read('secrets/ci/encryption.passphrase')
+          .chomp
+  }
+  t.checkout_keys = []
+  t.ssh_keys = [
+    {
+      hostname: 'github.com',
+      private_key: File.read('secrets/ci/ssh.private')
+    }
+  ]
+end
+
+RakeGithub.define_repository_tasks(
+  namespace: :github,
+  repository: 'tobyclemson/gorgon',
+  ) do |t|
+  github_config =
+    YAML.load_file('secrets/github/config.yaml')
+
+  t.access_token = github_config['github_personal_access_token']
+  t.deploy_keys = [
+    {
+      title: 'CircleCI',
+      public_key: File.read('secrets/ci/ssh.public')
+    }
+  ]
+end
+
+namespace :pipeline do
+  desc 'Prepare CircleCI Pipeline'
+  task prepare: %i[
+    circle_ci:project:follow
+    circle_ci:env_vars:ensure
+    circle_ci:checkout_keys:ensure
+    circle_ci:ssh_keys:ensure
+    github:deploy_keys:ensure
+  ]
 end
 
 namespace :tools do
