@@ -74,14 +74,14 @@ var organizationReposSyncCommand = &cobra.Command{
 						protocol,
 						sshOptions)
 					if err != nil {
-						return err
+						fmt.Println(err)
 					}
 				} else {
 					err = git.Pull(
 						repositoryDirectory,
 						sshOptions)
 					if err != nil {
-						return err
+						fmt.Println(err)
 					}
 				}
 				fmt.Println()
