@@ -46,10 +46,21 @@ end
 
 namespace :keys do
   namespace :deploy do
-    RakeSSH.define_key_tasks(
-      path: 'secrets/ci/',
-      comment: 'tobyclemson@gmail.com'
-    )
+    namespace :gorgon do
+      RakeSSH.define_key_tasks(
+        path: 'secrets/ci/',
+        name_prefix: 'gorgon.ssh',
+        comment: 'tobyclemson@gmail.com'
+      )
+    end
+
+    namespace :homebrew_utils do
+      RakeSSH.define_key_tasks(
+        path: 'secrets/ci/',
+        name_prefix: 'homebrew-utils.ssh',
+        comment: 'tobyclemson@gmail.com'
+      )
+    end
   end
 
   namespace :secrets do
@@ -71,7 +82,8 @@ namespace :secrets do
   desc 'Regenerate all secrets'
   task regenerate: %w[
     encryption:passphrase:generate
-    keys:deploy:generate
+    keys:deploy:gorgon:generate
+    keys:deploy:homebrew_utils:generate
     keys:secrets:generate
   ]
 end
@@ -93,25 +105,47 @@ RakeCircleCI.define_project_tasks(
   t.ssh_keys = [
     {
       hostname: 'github.com',
-      private_key: File.read('secrets/ci/ssh.private')
+      private_key: File.read('secrets/ci/gorgon.ssh.private')
+    },
+    {
+      hostname: 'github.com',
+      private_key: File.read('secrets/ci/homebrew-utils.ssh.private')
     }
   ]
 end
 
-RakeGithub.define_repository_tasks(
-  namespace: :github,
-  repository: 'tobyclemson/gorgon',
-  ) do |t|
-  github_config =
-    YAML.load_file('secrets/github/credentials.yaml')
+namespace :github do
+  RakeGithub.define_repository_tasks(
+    namespace: :gorgon,
+    repository: 'tobyclemson/gorgon',
+    ) do |t|
+    github_config =
+      YAML.load_file('secrets/github/credentials.yaml')
 
-  t.access_token = github_config['github_token']
-  t.deploy_keys = [
-    {
-      title: 'CircleCI',
-      public_key: File.read('secrets/ci/ssh.public')
-    }
-  ]
+    t.access_token = github_config['github_token']
+    t.deploy_keys = [
+      {
+        title: 'CircleCI',
+        public_key: File.read('secrets/ci/gorgon.ssh.public')
+      }
+    ]
+  end
+
+  RakeGithub.define_repository_tasks(
+    namespace: :homebrew_utils,
+    repository: 'tobyclemson/homebrew-utils',
+    ) do |t|
+    github_config =
+      YAML.load_file('secrets/github/credentials.yaml')
+
+    t.access_token = github_config['github_token']
+    t.deploy_keys = [
+      {
+        title: 'CircleCI - Gorgon',
+        public_key: File.read('secrets/ci/homebrew-utils.ssh.public')
+      }
+    ]
+  end
 end
 
 namespace :pipeline do
@@ -121,7 +155,8 @@ namespace :pipeline do
     circle_ci:env_vars:ensure
     circle_ci:checkout_keys:ensure
     circle_ci:ssh_keys:ensure
-    github:deploy_keys:ensure
+    github:gorgon:deploy_keys:ensure
+    github:homebrew_utils:deploy_keys:ensure
   ]
 end
 
@@ -231,7 +266,7 @@ namespace :test do
       github_token = github_credentials['github_token']
       ENV["TEST_GITHUB_TOKEN"] ||= github_token
 
-      ssh_private_key_path = "#{Dir.getwd}/secrets/ssh/ssh.private"
+      ssh_private_key_path = "#{Dir.getwd}/secrets/ssh/gorgon.ssh.private"
       ENV["TEST_SSH_PRIVATE_KEY_PATH"] ||= ssh_private_key_path
 
       binary_os = Platform.os
