@@ -13,8 +13,7 @@ source "./scripts/ci/helpers/setup-goenv.sh"
 source "./scripts/ci/helpers/unlock-git-crypt.sh"
 source "./scripts/ci/helpers/install-gems.sh"
 
-eval "$(ssh-agent)"
-ssh-add ~/.ssh/id_rsa_*
+export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa_63092536911eea685e909417d5a5dacb"
 
 bundle exec rake cli:release
 bundle exec rake homebrew:formula:push
