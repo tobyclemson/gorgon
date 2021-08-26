@@ -266,7 +266,7 @@ namespace :test do
       github_token = github_credentials['github_token']
       ENV["TEST_GITHUB_TOKEN"] ||= github_token
 
-      ssh_private_key_path = "#{Dir.getwd}/secrets/ssh/gorgon.ssh.private"
+      ssh_private_key_path = "#{Dir.getwd}/secrets/ssh/ssh.private"
       ENV["TEST_SSH_PRIVATE_KEY_PATH"] ||= ssh_private_key_path
 
       binary_os = Platform.os
