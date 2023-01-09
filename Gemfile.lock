@@ -31,7 +31,8 @@ GEM
     faraday-net_http_persistent (1.2.0)
     faraday-patron (1.0.0)
     faraday-rack (1.0.0)
-    git (1.9.1)
+    git (1.13.0)
+      addressable (~> 2.8)
       rchardet (~> 1.8)
     hamster (3.0.0)
       concurrent-ruby (~> 1.0)
@@ -88,7 +89,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  git (~> 1.5)
+  git (~> 1.13)
   mime-types (~> 3.3)
   octokit (~> 4.0)
   rake (~> 13.0)
