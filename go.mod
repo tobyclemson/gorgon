@@ -8,7 +8,6 @@ require (
 	github.com/go-git/go-git/v5 v5.0.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-github/v31 v31.0.0
-	github.com/mitchellh/gox v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.3.0 // indirect
 	github.com/pelletier/go-toml v1.7.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
@@ -18,10 +17,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.4.0
-	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
-	golang.org/x/net v0.0.0-20200513185701-a91f0712d120 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200515095857-1151b9dac4a9 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	gopkg.in/ini.v1 v1.56.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
